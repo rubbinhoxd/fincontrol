@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fincontrol-db
+    environment:
+      POSTGRES_DB: fincontrol
+      POSTGRES_USER: fincontrol
+      POSTGRES_PASSWORD: fincontrol123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fincontrol"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./fincontrol-api
+    container_name: fincontrol-api
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fincontrol
+      SPRING_DATASOURCE_USERNAME: fincontrol
+      SPRING_DATASOURCE_PASSWORD: fincontrol123
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build: ./fincontrol-web
+    container_name: fincontrol-web
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

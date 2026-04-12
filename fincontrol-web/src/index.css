@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+}
+
+.input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm;
+}
+
+.input:focus {
+  @apply ring-2 ring-primary/50 border-primary outline-none;
+}

@@ -1,0 +1,19 @@
+# Java / Maven
+fincontrol-api/target/
+*.class
+*.jar
+*.war
+
+# Node
+fincontrol-web/node_modules/
+fincontrol-web/dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Env
+.env
+*.env.local
