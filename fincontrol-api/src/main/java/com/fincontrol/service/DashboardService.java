@@ -11,8 +11,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;;
 
 @Service
 @RequiredArgsConstructor
@@ -145,6 +144,27 @@ public class DashboardService {
                 .difference(difference)
                 .percentChange(percentChange)
                 .build();
+    }
+
+    public List<Map<String, Object>> getYearlySummary(UUID userId, int year) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (int month = 1; month <= 12; month++) {
+            YearMonth ym = YearMonth.of(year, month);
+            LocalDate start = ym.atDay(1);
+            LocalDate end = ym.atEndOfMonth();
+
+            BigDecimal income = transactionRepository.sumByUserIdAndTypeAndDateRange(
+                    userId, TransactionType.INCOME, start, end);
+            BigDecimal expense = transactionRepository.sumByUserIdAndTypeAndDateRange(
+                    userId, TransactionType.EXPENSE, start, end);
+
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("month", String.format("%d-%02d", year, month));
+            entry.put("income", income);
+            entry.put("expense", expense);
+            result.add(entry);
+        }
+        return result;
     }
 
     private String determineAlertLevel(BigDecimal percentCommitted) {

@@ -8,6 +8,18 @@ body {
   margin: 0;
 }
 
+.dark body, body.dark {
+  @apply bg-gray-950 text-gray-100;
+}
+
+.dark .input {
+  @apply bg-gray-800 border-gray-600 text-gray-100;
+}
+
+.dark .input:focus {
+  @apply ring-2 ring-primary/50 border-primary outline-none;
+}
+
 .input {
   @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm;
 }

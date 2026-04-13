@@ -30,8 +30,8 @@ export default function MonthlyReference() {
 
   return (
     <PageContainer title="Referencia Mensal">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 max-w-lg">
-        <p className="text-sm text-gray-500 mb-4">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 max-w-lg">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Configure o salario de referencia para <strong>{formatYearMonth(yearMonth)}</strong>.
           Este valor sera usado para calcular os indicadores do dashboard.
         </p>
@@ -41,7 +41,7 @@ export default function MonthlyReference() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Salario (R$)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Salario (R$)</label>
               <input
                 type="number"
                 step="0.01"
@@ -54,7 +54,7 @@ export default function MonthlyReference() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Observacoes (opcional)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observacoes (opcional)</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

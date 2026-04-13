@@ -39,6 +39,10 @@ export default function Transactions() {
     load();
   };
 
+  const totalIncome = transactions.filter((t) => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0);
+  const totalExpense = transactions.filter((t) => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0);
+  const totalCount = transactions.length;
+
   const typeBadge = (type: TransactionType) =>
     type === 'INCOME'
       ? 'bg-success/10 text-success'
@@ -60,11 +64,11 @@ export default function Transactions() {
       {/* Month nav + filters */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <div className="flex items-center gap-2">
-          <button onClick={() => setYearMonth(previousYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={() => setYearMonth(previousYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
             <ChevronLeft size={18} />
           </button>
           <span className="font-medium min-w-40 text-center">{formatYearMonth(yearMonth)}</span>
-          <button onClick={() => setYearMonth(nextYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={() => setYearMonth(nextYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
             <ChevronRight size={18} />
           </button>
         </div>
@@ -72,7 +76,7 @@ export default function Transactions() {
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value as TransactionType | '')}
-          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
+          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm"
         >
           <option value="">Todos os tipos</option>
           <option value="INCOME">Receitas</option>
@@ -82,7 +86,7 @@ export default function Transactions() {
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
+          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm"
         >
           <option value="">Todas as categorias</option>
           {categories.map((c) => (
@@ -91,27 +95,57 @@ export default function Transactions() {
         </select>
       </div>
 
+      {/* Totalizador */}
+      {!loading && transactions.length > 0 && (
+        <div className="flex flex-wrap gap-4 mb-6">
+          {(filterType !== 'EXPENSE') && (
+            <div className="bg-white dark:bg-gray-900 rounded-xl px-5 py-3 shadow-sm border border-gray-100 dark:border-gray-800">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Receitas</p>
+              <p className="text-lg font-bold text-success">{formatCurrency(totalIncome)}</p>
+            </div>
+          )}
+          {(filterType !== 'INCOME') && (
+            <div className="bg-white dark:bg-gray-900 rounded-xl px-5 py-3 shadow-sm border border-gray-100 dark:border-gray-800">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Despesas</p>
+              <p className="text-lg font-bold text-danger">{formatCurrency(totalExpense)}</p>
+            </div>
+          )}
+          {!filterType && (
+            <div className="bg-white dark:bg-gray-900 rounded-xl px-5 py-3 shadow-sm border border-gray-100 dark:border-gray-800">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Saldo</p>
+              <p className={`text-lg font-bold ${totalIncome - totalExpense >= 0 ? 'text-success' : 'text-danger'}`}>
+                {formatCurrency(totalIncome - totalExpense)}
+              </p>
+            </div>
+          )}
+          <div className="bg-white dark:bg-gray-900 rounded-xl px-5 py-3 shadow-sm border border-gray-100 dark:border-gray-800">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Transacoes</p>
+            <p className="text-lg font-bold dark:text-gray-100">{totalCount}</p>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center py-12 text-gray-400">Carregando...</div>
       ) : transactions.length === 0 ? (
         <div className="text-center py-12 text-gray-400">Nenhuma transacao encontrada.</div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Data</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Descricao</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Categoria</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Valor</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Tags</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Data</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Descricao</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Categoria</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tipo</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tags</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
               {transactions.map((t) => (
-                <tr key={t.id} className="hover:bg-gray-50">
+                <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-4 py-3 text-sm">{formatDate(t.transactionDate)}</td>
                   <td className="px-4 py-3 text-sm font-medium">{t.description}</td>
                   <td className="px-4 py-3 text-sm">

@@ -102,7 +102,7 @@ export default function TransactionForm() {
 
   return (
     <PageContainer title={isEdit ? 'Editar transacao' : 'Nova transacao'}>
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 max-w-2xl space-y-5">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 max-w-2xl space-y-5">
         {/* Type selector */}
         <div className="flex gap-2">
           {(['EXPENSE', 'INCOME'] as TransactionType[]).map((t) => (
@@ -173,7 +173,7 @@ export default function TransactionForm() {
         {form.type === 'EXPENSE' && (
           <>
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-3">Classificacao</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Classificacao</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <Toggle label="Planejado" checked={form.planned} onChange={(v) => update('planned', v)} />
                 <Toggle label="Fixo" checked={form.fixed} onChange={(v) => update('fixed', v)} />
@@ -187,7 +187,7 @@ export default function TransactionForm() {
             {/* Parcelamento */}
             {(!isEdit || isExistingInstallment) && (
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-3">Parcelamento</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Parcelamento</p>
                 <Toggle
                   label="Parcelamento"
                   checked={form.installment}
@@ -265,7 +265,7 @@ export default function TransactionForm() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
       {children}
     </div>
   );
@@ -276,7 +276,7 @@ function Toggle({ label, checked, onChange, disabled }: { label: string; checked
     <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
       disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
     } ${
-      checked ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+      checked ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
     }`}>
       <input
         type="checkbox"

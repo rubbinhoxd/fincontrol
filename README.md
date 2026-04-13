@@ -592,9 +592,65 @@ GET /api/dashboard?yearMonth=2026-04
 | **v1.1** | Lancamentos recorrentes automaticos, orcamento/limite por categoria |
 | **v1.2** | Metas financeiras (ex: economizar X por mes), graficos de evolucao mensal |
 | **v1.3** | Multi-usuario + compartilhamento com namorada (convite por email) |
-| **v2.0** | OAuth (Google login), import de extratos bancarios, dark mode |
+| **v2.0** | OAuth (Google login), import de extratos OFX/CSV, dark mode |
 | **v2.1** | App mobile (React Native ou PWA), notificacoes push |
-| **v3.0** | Integracoes bancarias (Open Finance), relatorios anuais, projecoes |
+| **v3.0** | Integracao com agregador financeiro (Pluggy/Belvo) via Open Finance |
+| **v3.1** | Classificacao automatica de transacoes com IA |
+| **v4.0** | Sync automatico com contas bancarias, relatorios anuais, projecoes |
+
+---
+
+## 11. Integracao Bancaria — Plano de Automacao
+
+### Objetivo
+Automatizar o registro de transacoes com base nos dados reais do extrato bancario, eliminando o cadastro manual.
+
+### Como funciona o Open Finance no Brasil
+O Banco Central regulamentou o Open Finance, que obriga grandes bancos (BB, Itau, Bradesco, Nubank, etc.) a disponibilizar APIs padronizadas com dados de conta corrente, extrato, cartao de credito e investimentos. Porem, para consumir essas APIs diretamente, e necessario ser uma instituicao regulada pelo BC — o que inviabiliza o acesso direto para projetos pessoais.
+
+### Estrategia de implementacao por fase
+
+#### Fase 1 — Import de arquivo OFX/CSV (v2.0)
+- O Banco do Brasil permite exportar extrato nos formatos OFX e CSV
+- Implementar tela de upload no app
+- Parser que le o arquivo e cria transacoes automaticamente
+- Tela de revisao antes de confirmar o import (usuario pode classificar e ajustar)
+- **Viabilidade:** alta, sem dependencia externa
+
+#### Fase 2 — Integracao com agregador financeiro (v3.0)
+- Usar um agregador como **Pluggy** (pluggy.ai) ou **Belvo** (belvo.com)
+- Eles ja fizeram a integracao com os bancos via Open Finance
+- Tem SDK em JS e API REST
+- Fluxo:
+  1. Usuario conecta a conta do BB na tela do Pluggy (consentimento OAuth)
+  2. App consulta transacoes novas periodicamente (polling ou webhook)
+  3. Transacoes novas aparecem como "pendentes" para o usuario classificar
+- **Pluggy** tem plano gratuito limitado (bom para uso pessoal)
+- **Viabilidade:** media — depende de conta no agregador, mas tecnicamente simples
+
+#### Fase 3 — Classificacao automatica com IA (v3.1)
+- Quando entra uma transacao do extrato (ex: "PIX IFOOD 12/04"), o sistema classifica automaticamente:
+  - Categoria: Alimentacao
+  - Tipo: variavel, nao planejado
+- Pode usar regras simples no inicio (mapeamento descricao -> categoria)
+- Evoluir para modelo de ML ou LLM para classificacoes mais complexas
+- Usuario pode corrigir, e o sistema aprende com as correcoes
+- **Viabilidade:** alta para regras, media para IA
+
+#### Fase 4 — Sync automatico completo (v4.0)
+- Sync periodico em background (a cada X horas)
+- Notificacao quando novas transacoes sao detectadas
+- Dashboard atualizado em tempo real
+- Suporte a multiplas contas e bancos
+
+### Alternativas avaliadas
+
+| Alternativa | Viabilidade | Observacao |
+|-------------|-------------|------------|
+| **Import OFX/CSV** | Alta | Sem dependencia externa, funciona hoje |
+| **Pluggy / Belvo** | Media-Alta | Agregadores com plano free, SDK pronto |
+| **Open Finance direto** | Baixa | Precisa ser instituicao regulada pelo BC |
+| **Leitura de email/SMS** | Media | Parsear notificacoes do banco, fragil |
 
 ---
 

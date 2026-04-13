@@ -72,20 +72,20 @@ export default function Categories() {
       }
     >
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap items-end gap-4">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-4 mb-6 flex flex-wrap items-end gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
             <input value={name} onChange={(e) => setName(e.target.value)} className="input" required maxLength={60} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
             <select value={type} onChange={(e) => setType(e.target.value as TransactionType)} className="input">
               <option value="EXPENSE">Despesa</option>
               <option value="INCOME">Receita</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cor</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cor</label>
             <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-10 h-9 rounded cursor-pointer" />
           </div>
           <button type="submit" className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-dark">
@@ -113,14 +113,14 @@ function CategoryList({ title, categories, onEdit, onDelete }: {
   title: string; categories: Category[]; onEdit: (c: Category) => void; onDelete: (id: string) => void;
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <h3 className="font-semibold text-gray-900 mb-3">{title}</h3>
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-5">
+      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">{title}</h3>
       <div className="space-y-2">
         {categories.map((c) => (
-          <div key={c.id} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50">
+          <div key={c.id} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full" style={{ backgroundColor: c.color || '#6B7280' }} />
-              <span className="text-sm">{c.name}</span>
+              <span className="text-sm dark:text-gray-300">{c.name}</span>
             </div>
             <div className="flex items-center gap-1">
               <button onClick={() => onEdit(c)} className="p-1 text-gray-400 hover:text-primary"><Pencil size={14} /></button>
