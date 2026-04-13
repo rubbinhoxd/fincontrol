@@ -29,6 +29,7 @@ public class TransactionResponse {
     private Boolean essential;
     private Boolean impulse;
     private String notes;
+    private UUID recurringGroupId;
     private UUID installmentGroupId;
     private Integer currentInstallment;
     private Integer totalInstallments;

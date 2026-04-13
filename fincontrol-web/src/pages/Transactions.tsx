@@ -30,12 +30,24 @@ export default function Transactions() {
 
   useEffect(load, [yearMonth, filterType, filterCategory]);
 
-  const handleDelete = async (t: { id: string; installmentGroupId: string | null }) => {
-    const msg = t.installmentGroupId
-      ? 'Esta parcela e todas as parcelas futuras serao excluidas. Deseja continuar?'
-      : 'Deseja excluir esta transacao?';
-    if (!confirm(msg)) return;
-    await deleteTransaction(t.id);
+  const handleDelete = async (t: { id: string; installmentGroupId: string | null; recurringGroupId: string | null }) => {
+    if (t.installmentGroupId) {
+      if (!confirm('Esta parcela e todas as parcelas futuras serao excluidas. Deseja continuar?')) return;
+      await deleteTransaction(t.id, 'future');
+    } else if (t.recurringGroupId) {
+      const choice = prompt(
+        'Esta transacao e recorrente. Digite:\n1 - Excluir apenas este mes\n2 - Excluir este e todos os meses seguintes\n\nOu cancele para voltar.'
+      );
+      if (!choice) return;
+      if (choice === '2') {
+        await deleteTransaction(t.id, 'future');
+      } else {
+        await deleteTransaction(t.id, 'single');
+      }
+    } else {
+      if (!confirm('Deseja excluir esta transacao?')) return;
+      await deleteTransaction(t.id, 'single');
+    }
     load();
   };
 

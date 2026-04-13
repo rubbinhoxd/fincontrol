@@ -44,6 +44,7 @@ public class DashboardResponse {
     @AllArgsConstructor
     public static class CategoryTotal {
         private String categoryName;
+        private String categoryColor;
         private BigDecimal total;
         private BigDecimal percent;
     }

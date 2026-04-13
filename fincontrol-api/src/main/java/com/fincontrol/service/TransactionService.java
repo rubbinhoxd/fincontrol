@@ -24,6 +24,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TransactionService {
 
+    private static final int RECURRING_MONTHS_AHEAD = 12;
+
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
@@ -91,8 +93,12 @@ public class TransactionService {
             transaction.setTotalInstallments(request.getTotalInstallments());
 
             transaction = transactionRepository.save(transaction);
-
             createFutureInstallments(transaction, user, category, groupId);
+        } else if (Boolean.TRUE.equals(request.getRecurring()) && !Boolean.TRUE.equals(request.getInstallment())) {
+            UUID groupId = UUID.randomUUID();
+            transaction.setRecurringGroupId(groupId);
+            transaction = transactionRepository.save(transaction);
+            createFutureRecurring(transaction, user, category, groupId);
         } else {
             transaction = transactionRepository.save(transaction);
         }
@@ -122,21 +128,42 @@ public class TransactionService {
         transaction.setEssential(request.getEssential());
         transaction.setImpulse(request.getImpulse());
         transaction.setNotes(request.getNotes());
-        // installmentGroupId, currentInstallment, totalInstallments nao sao alteraveis
 
-        return toResponse(transactionRepository.save(transaction));
+        // Ativar recorrencia em transacao existente
+        if (Boolean.TRUE.equals(request.getActivateRecurring()) && transaction.getRecurringGroupId() == null
+                && transaction.getInstallmentGroupId() == null) {
+            User user = userRepository.getReferenceById(userId);
+            UUID groupId = UUID.randomUUID();
+            transaction.setRecurringGroupId(groupId);
+            transaction.setRecurring(true);
+            transaction.setFixed(true);
+            transaction = transactionRepository.save(transaction);
+            createFutureRecurring(transaction, user, category, groupId);
+        } else {
+            transaction = transactionRepository.save(transaction);
+        }
+
+        return toResponse(transaction);
     }
 
     @Transactional
-    public void delete(UUID userId, UUID transactionId) {
+    public void delete(UUID userId, UUID transactionId, String mode) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .filter(t -> t.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction", transactionId));
 
+        // Parcelamento: sempre exclui futuras (comportamento existente)
         if (transaction.getInstallmentGroupId() != null) {
             List<Transaction> futureInstallments = transactionRepository.findFutureInstallments(
                     transaction.getInstallmentGroupId(), transaction.getCurrentInstallment());
             transactionRepository.deleteAll(futureInstallments);
+        }
+
+        // Recorrencia: depende do mode
+        if (transaction.getRecurringGroupId() != null && "future".equals(mode)) {
+            List<Transaction> futureRecurring = transactionRepository.findFutureRecurring(
+                    transaction.getRecurringGroupId(), transaction.getTransactionDate());
+            transactionRepository.deleteAll(futureRecurring);
         }
 
         transactionRepository.delete(transaction);
@@ -193,6 +220,32 @@ public class TransactionService {
         transactionRepository.saveAll(futureInstallments);
     }
 
+    private void createFutureRecurring(Transaction original, User user, Category category, UUID groupId) {
+        List<Transaction> futureRecurring = new ArrayList<>();
+
+        for (int i = 1; i <= RECURRING_MONTHS_AHEAD; i++) {
+            Transaction copy = Transaction.builder()
+                    .user(user)
+                    .category(category)
+                    .type(original.getType())
+                    .description(original.getDescription())
+                    .amount(original.getAmount())
+                    .transactionDate(original.getTransactionDate().plusMonths(i))
+                    .planned(original.getPlanned())
+                    .fixed(true)
+                    .recurring(true)
+                    .subscription(original.getSubscription())
+                    .essential(original.getEssential())
+                    .impulse(false)
+                    .notes(original.getNotes())
+                    .recurringGroupId(groupId)
+                    .build();
+            futureRecurring.add(copy);
+        }
+
+        transactionRepository.saveAll(futureRecurring);
+    }
+
     private TransactionResponse toResponse(Transaction t) {
         return TransactionResponse.builder()
                 .id(t.getId())
@@ -210,6 +263,7 @@ public class TransactionService {
                 .essential(t.getEssential())
                 .impulse(t.getImpulse())
                 .notes(t.getNotes())
+                .recurringGroupId(t.getRecurringGroupId())
                 .installmentGroupId(t.getInstallmentGroupId())
                 .currentInstallment(t.getCurrentInstallment())
                 .totalInstallments(t.getTotalInstallments())

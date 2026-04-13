@@ -73,7 +73,7 @@ export default function DashboardPage() {
       center: ['50%', '50%'],
       itemStyle: { borderRadius: 6, borderColor: dark ? '#111827' : '#fff', borderWidth: 2 },
       label: { color: textColor, fontSize: 12 },
-      data: data.topCategories.map((cat) => ({ name: cat.categoryName, value: cat.total })),
+      data: data.topCategories.map((cat) => ({ name: cat.categoryName, value: cat.total, itemStyle: cat.categoryColor ? { color: cat.categoryColor } : undefined })),
     }],
   } : null;
 

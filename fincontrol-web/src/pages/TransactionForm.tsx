@@ -15,6 +15,8 @@ export default function TransactionForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isExistingInstallment, setIsExistingInstallment] = useState(false);
+  const [isExistingRecurring, setIsExistingRecurring] = useState(false);
+  const [canActivateRecurring, setCanActivateRecurring] = useState(false);
 
   const [form, setForm] = useState<TransactionRequest>({
     categoryId: '',
@@ -29,6 +31,7 @@ export default function TransactionForm() {
     essential: true,
     impulse: false,
     notes: null,
+    activateRecurring: false,
     installment: false,
     currentInstallment: null,
     totalInstallments: null,
@@ -43,7 +46,10 @@ export default function TransactionForm() {
       getTransaction(id).then((res) => {
         const t = res.data;
         const hasInstallment = t.installmentGroupId !== null;
+        const hasRecurring = t.recurringGroupId !== null;
         setIsExistingInstallment(hasInstallment);
+        setIsExistingRecurring(hasRecurring);
+        setCanActivateRecurring(!hasInstallment && !hasRecurring);
         setForm({
           categoryId: t.categoryId,
           type: t.type,
@@ -57,6 +63,7 @@ export default function TransactionForm() {
           essential: t.essential,
           impulse: t.impulse,
           notes: t.notes,
+          activateRecurring: false,
           installment: hasInstallment,
           currentInstallment: t.currentInstallment,
           totalInstallments: t.totalInstallments,
@@ -183,6 +190,31 @@ export default function TransactionForm() {
                 <Toggle label="Impulso" checked={form.impulse} onChange={(v) => update('impulse', v)} />
               </div>
             </div>
+
+            {/* Recorrencia — ativar em transacao existente */}
+            {isEdit && canActivateRecurring && (
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recorrencia</p>
+                <Toggle
+                  label="Ativar recorrencia (cria copias para os proximos 12 meses)"
+                  checked={form.activateRecurring}
+                  onChange={(v) => update('activateRecurring', v)}
+                />
+              </div>
+            )}
+
+            {isExistingRecurring && (
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                <p className="text-sm text-primary font-medium">Esta transacao faz parte de um grupo recorrente.</p>
+              </div>
+            )}
+
+            {/* Nota ao criar com recorrente */}
+            {!isEdit && form.recurring && !form.installment && (
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                <p className="text-sm text-primary">Ao criar com "Recorrente" marcado, o sistema criara copias automaticas para os proximos 12 meses.</p>
+              </div>
+            )}
 
             {/* Parcelamento */}
             {(!isEdit || isExistingInstallment) && (

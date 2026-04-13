@@ -60,16 +60,17 @@ public class DashboardService {
         List<Object[]> topCategoriesRaw = transactionRepository.findTopExpenseCategories(
                 userId, startDate, endDate);
         List<DashboardResponse.CategoryTotal> topCategories = topCategoriesRaw.stream()
-                .limit(5)
                 .map(row -> {
                     String catName = (String) row[0];
-                    BigDecimal catTotal = (BigDecimal) row[1];
+                    String catColor = (String) row[1];
+                    BigDecimal catTotal = (BigDecimal) row[2];
                     BigDecimal percent = totalExpense.compareTo(BigDecimal.ZERO) > 0
                             ? catTotal.multiply(BigDecimal.valueOf(100))
                                 .divide(totalExpense, 2, RoundingMode.HALF_UP)
                             : BigDecimal.ZERO;
                     return DashboardResponse.CategoryTotal.builder()
                             .categoryName(catName)
+                            .categoryColor(catColor)
                             .total(catTotal)
                             .percent(percent)
                             .build();

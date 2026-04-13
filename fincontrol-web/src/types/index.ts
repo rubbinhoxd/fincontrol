@@ -31,6 +31,7 @@ export interface Transaction {
   essential: boolean;
   impulse: boolean;
   notes: string | null;
+  recurringGroupId: string | null;
   installmentGroupId: string | null;
   currentInstallment: number | null;
   totalInstallments: number | null;
@@ -50,6 +51,7 @@ export interface TransactionRequest {
   essential: boolean;
   impulse: boolean;
   notes: string | null;
+  activateRecurring: boolean;
   installment: boolean;
   currentInstallment: number | null;
   totalInstallments: number | null;
@@ -74,6 +76,7 @@ export interface ExpenseBreakdown {
 
 export interface CategoryTotal {
   categoryName: string;
+  categoryColor: string | null;
   total: number;
   percent: number;
 }

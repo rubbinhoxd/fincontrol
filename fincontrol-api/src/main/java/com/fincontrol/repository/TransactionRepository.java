@@ -67,10 +67,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
            "AND t.transactionDate BETWEEN :startDate AND :endDate")
     BigDecimal sumEssentialExpenses(UUID userId, LocalDate startDate, LocalDate endDate);
 
-    @Query("SELECT t.category.name, SUM(t.amount) FROM Transaction t " +
+    @Query("SELECT t.category.name, t.category.color, SUM(t.amount) FROM Transaction t " +
            "WHERE t.user.id = :userId AND t.type = 'EXPENSE' " +
            "AND t.transactionDate BETWEEN :startDate AND :endDate " +
-           "GROUP BY t.category.name ORDER BY SUM(t.amount) DESC")
+           "GROUP BY t.category.name, t.category.color ORDER BY SUM(t.amount) DESC")
     List<Object[]> findTopExpenseCategories(UUID userId, LocalDate startDate, LocalDate endDate);
 
     @Query("SELECT t FROM Transaction t WHERE t.installmentGroupId = :groupId " +
@@ -82,4 +82,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
            "AND t.installmentGroupId IS NOT NULL " +
            "AND t.transactionDate >= :fromDate")
     BigDecimal sumInstallmentExpenses(UUID userId, LocalDate fromDate);
+
+    @Query("SELECT t FROM Transaction t WHERE t.recurringGroupId = :groupId " +
+           "AND t.transactionDate > :afterDate")
+    List<Transaction> findFutureRecurring(UUID groupId, LocalDate afterDate);
+
+    @Query("SELECT t FROM Transaction t WHERE t.recurringGroupId = :groupId " +
+           "AND t.transactionDate >= :fromDate")
+    List<Transaction> findRecurringFromDate(UUID groupId, LocalDate fromDate);
 }

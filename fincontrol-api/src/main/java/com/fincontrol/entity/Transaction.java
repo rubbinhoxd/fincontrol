@@ -73,6 +73,9 @@ public class Transaction {
 
     private String notes;
 
+    @Column(name = "recurring_group_id")
+    private UUID recurringGroupId;
+
     @Column(name = "installment_group_id")
     private UUID installmentGroupId;
 

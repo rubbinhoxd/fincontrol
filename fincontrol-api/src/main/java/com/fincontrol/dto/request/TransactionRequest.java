@@ -36,6 +36,8 @@ public class TransactionRequest {
     private Boolean impulse = false;
     private String notes;
 
+    private Boolean activateRecurring = false;
+
     private Boolean installment = false;
 
     @Min(1)
