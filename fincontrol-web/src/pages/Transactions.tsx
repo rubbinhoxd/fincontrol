@@ -14,6 +14,7 @@ export default function Transactions() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [filterType, setFilterType] = useState<TransactionType | ''>('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [filterClassification, setFilterClassification] = useState<'' | 'INSTALLMENT' | 'FIXED' | 'AVULSO'>('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -51,9 +52,16 @@ export default function Transactions() {
     load();
   };
 
-  const totalIncome = transactions.filter((t) => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0);
-  const totalExpense = transactions.filter((t) => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0);
-  const totalCount = transactions.length;
+  const filteredTransactions = transactions.filter((t) => {
+    if (filterClassification === 'INSTALLMENT') return t.installmentGroupId !== null;
+    if (filterClassification === 'FIXED') return t.fixed && t.installmentGroupId === null;
+    if (filterClassification === 'AVULSO') return !t.fixed && t.installmentGroupId === null;
+    return true;
+  });
+
+  const totalIncome = filteredTransactions.filter((t) => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0);
+  const totalExpense = filteredTransactions.filter((t) => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0);
+  const totalCount = filteredTransactions.length;
 
   const typeBadge = (type: TransactionType) =>
     type === 'INCOME'
@@ -96,6 +104,17 @@ export default function Transactions() {
         </select>
 
         <select
+          value={filterClassification}
+          onChange={(e) => setFilterClassification(e.target.value as '' | 'INSTALLMENT' | 'FIXED' | 'AVULSO')}
+          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm"
+        >
+          <option value="">Todas as classificacoes</option>
+          <option value="INSTALLMENT">Parcelados</option>
+          <option value="FIXED">Fixos</option>
+          <option value="AVULSO">Avulsos</option>
+        </select>
+
+        <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
           className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm"
@@ -108,7 +127,7 @@ export default function Transactions() {
       </div>
 
       {/* Totalizador */}
-      {!loading && transactions.length > 0 && (
+      {!loading && filteredTransactions.length > 0 && (
         <div className="flex flex-wrap gap-4 mb-6">
           {(filterType !== 'EXPENSE') && (
             <div className="bg-white dark:bg-gray-900 rounded-xl px-5 py-3 shadow-sm border border-gray-100 dark:border-gray-800">
@@ -139,7 +158,7 @@ export default function Transactions() {
 
       {loading ? (
         <div className="text-center py-12 text-gray-400">Carregando...</div>
-      ) : transactions.length === 0 ? (
+      ) : filteredTransactions.length === 0 ? (
         <div className="text-center py-12 text-gray-400">Nenhuma transacao encontrada.</div>
       ) : (
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -156,7 +175,7 @@ export default function Transactions() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {transactions.map((t) => (
+              {filteredTransactions.map((t) => (
                 <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-4 py-3 text-sm">{formatDate(t.transactionDate)}</td>
                   <td className="px-4 py-3 text-sm font-medium">{t.description}</td>

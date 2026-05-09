@@ -26,6 +26,11 @@ export function nextYearMonth(yearMonth: string): string {
   return `${year}-${String(month + 1).padStart(2, '0')}`;
 }
 
+const WEEKDAYS = ['Domingo', 'Segunda-feira', 'Terca-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sabado'];
+
 export function formatDate(date: string): string {
-  return new Date(date + 'T00:00:00').toLocaleDateString('pt-BR');
+  const d = new Date(date + 'T00:00:00');
+  const formatted = d.toLocaleDateString('pt-BR');
+  const weekday = WEEKDAYS[d.getDay()];
+  return `${formatted} - ${weekday}`;
 }
