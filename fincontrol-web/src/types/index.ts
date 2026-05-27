@@ -103,3 +103,21 @@ export interface Dashboard {
   previousMonthComparison: MonthComparison;
   alertLevel: 'GREEN' | 'YELLOW' | 'RED';
 }
+
+export interface SimulatedItem {
+  type: TransactionType;
+  amount: number;
+  categoryId: string | null;
+  planned: boolean;
+  fixed: boolean;
+  recurring: boolean;
+  subscription: boolean;
+  essential: boolean;
+  impulse: boolean;
+}
+
+export interface SimulationRequest {
+  yearMonth: string;
+  salaryOverride: number | null;
+  items: SimulatedItem[];
+}

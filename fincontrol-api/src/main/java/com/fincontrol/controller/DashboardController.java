@@ -1,7 +1,9 @@
 package com.fincontrol.controller;
 
+import com.fincontrol.dto.request.SimulationRequest;
 import com.fincontrol.dto.response.DashboardResponse;
 import com.fincontrol.service.DashboardService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,5 +32,12 @@ public class DashboardController {
             @AuthenticationPrincipal UUID userId,
             @RequestParam int year) {
         return ResponseEntity.ok(dashboardService.getYearlySummary(userId, year));
+    }
+
+    @PostMapping("/simulate")
+    public ResponseEntity<DashboardResponse> simulate(
+            @AuthenticationPrincipal UUID userId,
+            @Valid @RequestBody SimulationRequest request) {
+        return ResponseEntity.ok(dashboardService.simulate(userId, request));
     }
 }
