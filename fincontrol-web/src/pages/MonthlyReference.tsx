@@ -1,23 +1,29 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import PageContainer from '../components/layout/PageContainer';
 import { getMonthlyReference, upsertMonthlyReference } from '../api/dashboard';
-import { getCurrentYearMonth, formatYearMonth } from '../utils/date';
+import { getCurrentYearMonth, formatYearMonth, previousYearMonth, nextYearMonth } from '../utils/date';
 
 export default function MonthlyReference() {
-  const [yearMonth] = useState(getCurrentYearMonth());
+  const [yearMonth, setYearMonth] = useState(getCurrentYearMonth());
   const [salary, setSalary] = useState<number>(0);
   const [notes, setNotes] = useState('');
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
+    setSaved(false);
     getMonthlyReference(yearMonth)
       .then((res) => {
         setSalary(res.data.salary);
         setNotes(res.data.notes || '');
       })
-      .catch(() => {})
+      .catch(() => {
+        setSalary(0);
+        setNotes('');
+      })
       .finally(() => setLoading(false));
   }, [yearMonth]);
 
@@ -29,11 +35,24 @@ export default function MonthlyReference() {
   };
 
   return (
-    <PageContainer title="Referencia Mensal">
+    <PageContainer
+      title="Referencia Mensal"
+      action={
+        <div className="flex items-center gap-3">
+          <button onClick={() => setYearMonth(previousYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+            <ChevronLeft size={20} />
+          </button>
+          <span className="text-lg font-medium min-w-48 text-center">{formatYearMonth(yearMonth)}</span>
+          <button onClick={() => setYearMonth(nextYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      }
+    >
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 max-w-lg">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Configure o salario de referencia para <strong>{formatYearMonth(yearMonth)}</strong>.
-          Este valor sera usado para calcular os indicadores do dashboard.
+          Este valor sera usado para calcular os indicadores do dashboard. Se nao configurado, herda o ultimo valor cadastrado.
         </p>
 
         {loading ? (
