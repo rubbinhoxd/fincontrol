@@ -133,7 +133,11 @@ public class DashboardService {
         Map<UUID, BigDecimal> categoryDeltas = new LinkedHashMap<>();
 
         for (SimulationRequest.SimulatedItem item : request.getItems()) {
-            BigDecimal amount = item.getAmount() != null ? item.getAmount() : BigDecimal.ZERO;
+            BigDecimal rawAmount = item.getAmount() != null ? item.getAmount() : BigDecimal.ZERO;
+            // Se a despesa simulada e compartilhada 50/50, a minha parte e metade
+            BigDecimal amount = Boolean.TRUE.equals(item.getSharedWithPartner())
+                    ? rawAmount.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP)
+                    : rawAmount;
 
             if (item.getType() == TransactionType.INCOME) {
                 deltaIncome = deltaIncome.add(amount);

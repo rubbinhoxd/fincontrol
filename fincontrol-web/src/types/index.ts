@@ -30,6 +30,7 @@ export interface Transaction {
   subscription: boolean;
   essential: boolean;
   impulse: boolean;
+  sharedWithPartner: boolean;
   notes: string | null;
   cardId: string | null;
   cardName: string | null;
@@ -53,6 +54,7 @@ export interface TransactionRequest {
   subscription: boolean;
   essential: boolean;
   impulse: boolean;
+  sharedWithPartner: boolean;
   notes: string | null;
   cardId: string | null;
   activateRecurring: boolean;
@@ -118,6 +120,7 @@ export interface SimulatedItem {
   subscription: boolean;
   essential: boolean;
   impulse: boolean;
+  sharedWithPartner: boolean;
 }
 
 export interface SimulationRequest {
@@ -134,6 +137,7 @@ export interface Card {
   closingDay: number;
   dueDay: number;
   creditLimit: number;
+  shared: boolean;
   active: boolean;
 }
 
@@ -145,9 +149,11 @@ export interface CardCycle {
   closingDay: number;
   dueDay: number;
   creditLimit: number;
+  shared: boolean;
   cycleStart: string;
   cycleEnd: string;
   totalSpent: number;
+  myShare: number;
   percentOfLimit: number;
   percentOfSalary: number;
   daysUntilClosing: number;
@@ -167,4 +173,5 @@ export interface CardRequest {
   closingDay: number;
   dueDay: number;
   creditLimit: number;
+  shared: boolean;
 }

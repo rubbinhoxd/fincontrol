@@ -50,6 +50,10 @@ public class Card {
 
     @Builder.Default
     @Column(nullable = false)
+    private Boolean shared = false;
+
+    @Builder.Default
+    @Column(nullable = false)
     private Boolean active = true;
 
     @CreationTimestamp

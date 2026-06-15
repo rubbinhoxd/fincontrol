@@ -75,6 +75,10 @@ public class Transaction {
     @Column(nullable = false)
     private Boolean impulse = false;
 
+    @Builder.Default
+    @Column(name = "shared_with_partner", nullable = false)
+    private Boolean sharedWithPartner = false;
+
     private String notes;
 
     @Column(name = "recurring_group_id")

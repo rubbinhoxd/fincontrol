@@ -22,6 +22,7 @@ const emptyDraft = (): DraftItem => ({
   subscription: false,
   essential: true,
   impulse: false,
+  sharedWithPartner: false,
 });
 
 export default function Simulations() {
@@ -154,14 +155,17 @@ export default function Simulations() {
             </div>
 
             {draft.type === 'EXPENSE' && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                <MiniToggle label="Planejado" checked={draft.planned} onChange={(v) => updateDraft('planned', v)} />
-                <MiniToggle label="Fixo" checked={draft.fixed} onChange={(v) => updateDraft('fixed', v)} />
-                <MiniToggle label="Recorrente" checked={draft.recurring} onChange={(v) => updateDraft('recurring', v)} />
-                <MiniToggle label="Assinatura" checked={draft.subscription} onChange={(v) => updateDraft('subscription', v)} />
-                <MiniToggle label="Essencial" checked={draft.essential} onChange={(v) => updateDraft('essential', v)} />
-                <MiniToggle label="Impulso" checked={draft.impulse} onChange={(v) => updateDraft('impulse', v)} />
-              </div>
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <MiniToggle label="Planejado" checked={draft.planned} onChange={(v) => updateDraft('planned', v)} />
+                  <MiniToggle label="Fixo" checked={draft.fixed} onChange={(v) => updateDraft('fixed', v)} />
+                  <MiniToggle label="Recorrente" checked={draft.recurring} onChange={(v) => updateDraft('recurring', v)} />
+                  <MiniToggle label="Assinatura" checked={draft.subscription} onChange={(v) => updateDraft('subscription', v)} />
+                  <MiniToggle label="Essencial" checked={draft.essential} onChange={(v) => updateDraft('essential', v)} />
+                  <MiniToggle label="Impulso" checked={draft.impulse} onChange={(v) => updateDraft('impulse', v)} />
+                </div>
+                <MiniToggle label="Compartilhar 50/50 com parceiro" checked={draft.sharedWithPartner} onChange={(v) => updateDraft('sharedWithPartner', v)} />
+              </>
             )}
 
             <button onClick={addItem} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">

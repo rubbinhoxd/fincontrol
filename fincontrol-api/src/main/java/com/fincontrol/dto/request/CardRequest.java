@@ -31,4 +31,6 @@ public class CardRequest {
     @NotNull
     @DecimalMin(value = "0.01")
     private BigDecimal creditLimit;
+
+    private Boolean shared = false;
 }

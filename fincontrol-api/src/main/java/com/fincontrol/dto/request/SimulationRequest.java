@@ -34,5 +34,6 @@ public class SimulationRequest {
         private Boolean subscription = false;
         private Boolean essential = true;
         private Boolean impulse = false;
+        private Boolean sharedWithPartner = false;
     }
 }

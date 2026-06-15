@@ -51,6 +51,7 @@ public class CardService {
                 .closingDay(request.getClosingDay())
                 .dueDay(request.getDueDay())
                 .creditLimit(request.getCreditLimit())
+                .shared(Boolean.TRUE.equals(request.getShared()))
                 .build();
         return toResponse(cardRepository.save(card));
     }
@@ -66,6 +67,7 @@ public class CardService {
         card.setClosingDay(request.getClosingDay());
         card.setDueDay(request.getDueDay());
         card.setCreditLimit(request.getCreditLimit());
+        card.setShared(Boolean.TRUE.equals(request.getShared()));
 
         return toResponse(cardRepository.save(card));
     }
@@ -121,6 +123,8 @@ public class CardService {
 
         BigDecimal totalSpent = transactionRepository.sumByCardAndDateRange(
                 card.getId(), cycleStart, cycleEnd);
+        BigDecimal myShare = transactionRepository.sumMyShareByCardAndDateRange(
+                card.getId(), cycleStart, cycleEnd);
         long count = transactionRepository.countByCardAndDateRange(
                 card.getId(), cycleStart, cycleEnd);
 
@@ -132,7 +136,7 @@ public class CardService {
 
         BigDecimal percentOfSalary = BigDecimal.ZERO;
         if (salary.compareTo(BigDecimal.ZERO) > 0) {
-            percentOfSalary = totalSpent.multiply(BigDecimal.valueOf(100))
+            percentOfSalary = myShare.multiply(BigDecimal.valueOf(100))
                     .divide(salary, 2, RoundingMode.HALF_UP);
         }
 
@@ -149,9 +153,11 @@ public class CardService {
                 .closingDay(card.getClosingDay())
                 .dueDay(card.getDueDay())
                 .creditLimit(card.getCreditLimit())
+                .shared(card.getShared())
                 .cycleStart(cycleStart)
                 .cycleEnd(cycleEnd)
                 .totalSpent(totalSpent)
+                .myShare(myShare)
                 .percentOfLimit(percentOfLimit)
                 .percentOfSalary(percentOfSalary)
                 .daysUntilClosing(daysUntilClosing)
@@ -192,6 +198,7 @@ public class CardService {
                 .closingDay(c.getClosingDay())
                 .dueDay(c.getDueDay())
                 .creditLimit(c.getCreditLimit())
+                .shared(c.getShared())
                 .active(c.getActive())
                 .build();
     }
@@ -215,6 +222,7 @@ public class CardService {
                 .subscription(t.getSubscription())
                 .essential(t.getEssential())
                 .impulse(t.getImpulse())
+                .sharedWithPartner(t.getSharedWithPartner())
                 .notes(t.getNotes())
                 .recurringGroupId(t.getRecurringGroupId())
                 .installmentGroupId(t.getInstallmentGroupId())

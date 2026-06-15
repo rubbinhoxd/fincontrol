@@ -90,11 +90,19 @@ export default function CardCycleDetail() {
             </div>
 
             <div className="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-100 dark:border-gray-800 space-y-3">
-              <Stat label="Total da fatura" value={formatCurrency(data.cycle.totalSpent)} highlight />
+              <Stat label="Fatura total" value={formatCurrency(data.cycle.totalSpent)} highlight />
+              {data.cycle.shared && (
+                <Stat label="Minha parte" value={formatCurrency(data.cycle.myShare)} share />
+              )}
               <Stat label="% do limite" value={formatPercent(data.cycle.percentOfLimit)} />
               <Stat label="% do salario" value={formatPercent(data.cycle.percentOfSalary)} />
               <Stat label="Limite" value={formatCurrency(data.cycle.creditLimit)} muted />
               <Stat label="Transacoes" value={String(data.cycle.transactionCount)} muted />
+              {data.cycle.shared && (
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-800">
+                  Cartao compartilhado — % do salario considera apenas a sua parte.
+                </p>
+              )}
             </div>
           </div>
 
@@ -126,6 +134,9 @@ export default function CardCycleDetail() {
                               {t.currentInstallment}/{t.totalInstallments}
                             </span>
                           )}
+                          {t.sharedWithPartner && (
+                            <span className="ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/15 text-primary" title="Dividido 50/50 com parceiro">½ casal</span>
+                          )}
                         </td>
                         <td className="px-4 py-2 text-sm dark:text-gray-300">
                           <span className="inline-flex items-center gap-1.5">
@@ -149,11 +160,11 @@ export default function CardCycleDetail() {
   );
 }
 
-function Stat({ label, value, highlight, muted }: { label: string; value: string; highlight?: boolean; muted?: boolean }) {
+function Stat({ label, value, highlight, muted, share }: { label: string; value: string; highlight?: boolean; muted?: boolean; share?: boolean }) {
   return (
     <div className="flex justify-between items-baseline">
       <span className={`text-sm ${muted ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}>{label}</span>
-      <span className={`${highlight ? 'text-2xl font-bold text-danger' : muted ? 'text-sm text-gray-400 dark:text-gray-500' : 'text-base font-semibold dark:text-gray-100'}`}>{value}</span>
+      <span className={`${highlight ? 'text-2xl font-bold text-danger' : share ? 'text-xl font-bold text-primary' : muted ? 'text-sm text-gray-400 dark:text-gray-500' : 'text-base font-semibold dark:text-gray-100'}`}>{value}</span>
     </div>
   );
 }

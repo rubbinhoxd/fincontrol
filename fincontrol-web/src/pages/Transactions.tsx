@@ -201,6 +201,7 @@ export default function Transactions() {
                           {t.cardName}
                         </span>
                       )}
+                      {t.sharedWithPartner && <Tag label="½ casal" color="bg-primary/10 text-primary" />}
                       {t.currentInstallment && t.totalInstallments && <Tag label={`${t.currentInstallment}/${t.totalInstallments}`} color="bg-indigo-100 text-indigo-700" />}
                       {t.impulse && <Tag label="Impulso" color="bg-red-100 text-red-700" />}
                       {!t.planned && !t.impulse && <Tag label="Nao planejado" color="bg-orange-100 text-orange-700" />}

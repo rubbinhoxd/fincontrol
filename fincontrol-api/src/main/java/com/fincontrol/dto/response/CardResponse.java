@@ -18,5 +18,6 @@ public class CardResponse {
     private Integer closingDay;
     private Integer dueDay;
     private BigDecimal creditLimit;
+    private Boolean shared;
     private Boolean active;
 }

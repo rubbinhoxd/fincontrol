@@ -16,6 +16,7 @@ const emptyForm = (): CardRequest => ({
   closingDay: 10,
   dueDay: 18,
   creditLimit: 0,
+  shared: false,
 });
 
 export default function Cards() {
@@ -51,6 +52,7 @@ export default function Cards() {
       closingDay: card.closingDay,
       dueDay: card.dueDay,
       creditLimit: card.creditLimit,
+      shared: card.shared,
     });
     setShowForm(true);
   };
@@ -128,6 +130,12 @@ export default function Cards() {
                 <input type="number" step="0.01" min="0.01" value={form.creditLimit || ''} onChange={(e) => setForm({ ...form, creditLimit: parseFloat(e.target.value) || 0 })} className="input" required />
               </div>
 
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+                <input type="checkbox" checked={form.shared} onChange={(e) => setForm({ ...form, shared: e.target.checked })} className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                Cartao compartilhado com parceiro(a)
+                <span className="text-xs text-gray-400">— transacoes podem ser divididas 50/50</span>
+              </label>
+
               <div className="flex gap-3">
                 <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-primary-dark">{editId ? 'Salvar' : 'Criar'}</button>
                 <button type="button" onClick={resetForm} className="px-6 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700">Cancelar</button>
@@ -184,6 +192,15 @@ function CardCycleItem({ cycle, onOpen, onEdit, onDelete }: {
         />
       </button>
       <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
+        {cycle.shared && (
+          <div className="flex items-center justify-between mb-3 p-2 rounded bg-primary/5">
+            <div>
+              <p className="text-[10px] uppercase text-gray-500 dark:text-gray-400">Sua parte</p>
+              <p className="text-lg font-bold text-primary">{formatCurrency(cycle.myShare)}</p>
+            </div>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-primary/15 text-primary uppercase tracking-wide">Compartilhado</span>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">% do limite</p>

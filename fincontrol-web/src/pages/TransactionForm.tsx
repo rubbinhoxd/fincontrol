@@ -34,6 +34,7 @@ export default function TransactionForm() {
     impulse: false,
     notes: null,
     cardId: null,
+    sharedWithPartner: false,
     activateRecurring: false,
     installment: false,
     currentInstallment: null,
@@ -68,6 +69,7 @@ export default function TransactionForm() {
           impulse: t.impulse,
           notes: t.notes,
           cardId: t.cardId,
+          sharedWithPartner: t.sharedWithPartner,
           activateRecurring: false,
           installment: hasInstallment,
           currentInstallment: t.currentInstallment,
@@ -79,15 +81,27 @@ export default function TransactionForm() {
 
   const filteredCategories = categories.filter((c) => c.type === form.type);
 
+  const selectedCard = cards.find((c) => c.id === form.cardId) ?? null;
+  const canShare = !!selectedCard && selectedCard.shared;
+
   const update = (field: string, value: any) => {
     setForm((prev) => {
       const next = { ...prev, [field]: value };
       if (field === 'subscription' && value) next.recurring = true;
       if (field === 'impulse' && value) next.planned = false;
-      if (field === 'type') next.categoryId = '';
+      if (field === 'type') {
+        next.categoryId = '';
+        next.cardId = null;
+        next.sharedWithPartner = false;
+      }
       if (field === 'installment' && !value) {
         next.currentInstallment = null;
         next.totalInstallments = null;
+      }
+      if (field === 'cardId') {
+        // Se o novo cartao nao for compartilhado, zera o flag
+        const c = cards.find((cc) => cc.id === value) ?? null;
+        if (!c || !c.shared) next.sharedWithPartner = false;
       }
       return next;
     });
@@ -190,12 +204,24 @@ export default function TransactionForm() {
               >
                 <option value="">Sem cartao (PIX/debito/dinheiro)</option>
                 {cards.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>{c.name}{c.shared ? ' (compartilhado)' : ''}</option>
                 ))}
               </select>
             </Field>
           )}
         </div>
+
+        {form.type === 'EXPENSE' && canShare && (
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-primary">
+              <input type="checkbox" checked={form.sharedWithPartner} onChange={(e) => update('sharedWithPartner', e.target.checked)} className="w-4 h-4 rounded border-primary/40 text-primary focus:ring-primary" />
+              Dividido por casal? (50/50)
+            </label>
+            {form.sharedWithPartner && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Sua parte sera contabilizada como metade do valor.</p>
+            )}
+          </div>
+        )}
 
         {form.type === 'EXPENSE' && (
           <>

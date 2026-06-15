@@ -71,6 +71,7 @@ public class TransactionService {
                 .filter(c -> c.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Category", request.getCategoryId()));
         Card card = resolveCard(userId, request.getCardId());
+        boolean shared = resolveSharedFlag(card, request.getSharedWithPartner());
 
         Transaction transaction = Transaction.builder()
                 .user(user)
@@ -86,6 +87,7 @@ public class TransactionService {
                 .subscription(request.getSubscription())
                 .essential(request.getEssential())
                 .impulse(request.getImpulse())
+                .sharedWithPartner(shared)
                 .notes(request.getNotes())
                 .build();
 
@@ -121,6 +123,7 @@ public class TransactionService {
                 .filter(c -> c.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Category", request.getCategoryId()));
         Card card = resolveCard(userId, request.getCardId());
+        boolean shared = resolveSharedFlag(card, request.getSharedWithPartner());
 
         transaction.setCategory(category);
         transaction.setCard(card);
@@ -134,6 +137,7 @@ public class TransactionService {
         transaction.setSubscription(request.getSubscription());
         transaction.setEssential(request.getEssential());
         transaction.setImpulse(request.getImpulse());
+        transaction.setSharedWithPartner(shared);
         transaction.setNotes(request.getNotes());
 
         // Ativar recorrencia em transacao existente
@@ -217,6 +221,7 @@ public class TransactionService {
                     .subscription(false)
                     .essential(original.getEssential())
                     .impulse(false)
+                    .sharedWithPartner(original.getSharedWithPartner())
                     .notes(original.getNotes())
                     .installmentGroupId(groupId)
                     .currentInstallment(i)
@@ -246,6 +251,7 @@ public class TransactionService {
                     .subscription(original.getSubscription())
                     .essential(original.getEssential())
                     .impulse(false)
+                    .sharedWithPartner(original.getSharedWithPartner())
                     .notes(original.getNotes())
                     .recurringGroupId(groupId)
                     .build();
@@ -259,6 +265,15 @@ public class TransactionService {
         if (cardId == null) return null;
         return cardRepository.findByIdAndUserId(cardId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card", cardId));
+    }
+
+    /**
+     * "Dividido por casal" so faz sentido se houver cartao selecionado E o cartao for compartilhado.
+     * Caso contrario, ignora silenciosamente — protege contra estado invalido vindo do client.
+     */
+    private boolean resolveSharedFlag(Card card, Boolean requestedShared) {
+        if (!Boolean.TRUE.equals(requestedShared)) return false;
+        return card != null && Boolean.TRUE.equals(card.getShared());
     }
 
     private TransactionResponse toResponse(Transaction t) {
@@ -280,6 +295,7 @@ public class TransactionService {
                 .subscription(t.getSubscription())
                 .essential(t.getEssential())
                 .impulse(t.getImpulse())
+                .sharedWithPartner(t.getSharedWithPartner())
                 .notes(t.getNotes())
                 .recurringGroupId(t.getRecurringGroupId())
                 .installmentGroupId(t.getInstallmentGroupId())

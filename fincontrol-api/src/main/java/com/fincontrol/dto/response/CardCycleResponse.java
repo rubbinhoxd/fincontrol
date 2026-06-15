@@ -19,9 +19,11 @@ public class CardCycleResponse {
     private Integer closingDay;
     private Integer dueDay;
     private BigDecimal creditLimit;
+    private Boolean shared;
     private LocalDate cycleStart;
     private LocalDate cycleEnd;
     private BigDecimal totalSpent;
+    private BigDecimal myShare;
     private BigDecimal percentOfLimit;
     private BigDecimal percentOfSalary;
     private int daysUntilClosing;

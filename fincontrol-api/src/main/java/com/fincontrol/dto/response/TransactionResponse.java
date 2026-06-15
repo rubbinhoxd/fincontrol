@@ -31,6 +31,7 @@ public class TransactionResponse {
     private Boolean subscription;
     private Boolean essential;
     private Boolean impulse;
+    private Boolean sharedWithPartner;
     private String notes;
     private UUID recurringGroupId;
     private UUID installmentGroupId;

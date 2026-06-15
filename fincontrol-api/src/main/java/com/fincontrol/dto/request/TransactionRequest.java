@@ -36,6 +36,7 @@ public class TransactionRequest {
     private Boolean subscription = false;
     private Boolean essential = true;
     private Boolean impulse = false;
+    private Boolean sharedWithPartner = false;
     private String notes;
 
     private Boolean activateRecurring = false;

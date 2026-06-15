@@ -1,0 +1,2 @@
+ALTER TABLE cards ADD COLUMN shared BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE transactions ADD COLUMN shared_with_partner BOOLEAN NOT NULL DEFAULT false;
