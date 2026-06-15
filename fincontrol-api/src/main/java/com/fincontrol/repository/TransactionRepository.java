@@ -90,4 +90,20 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     @Query("SELECT t FROM Transaction t WHERE t.recurringGroupId = :groupId " +
            "AND t.transactionDate >= :fromDate")
     List<Transaction> findRecurringFromDate(UUID groupId, LocalDate fromDate);
+
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t " +
+           "WHERE t.card.id = :cardId AND t.type = 'EXPENSE' " +
+           "AND t.transactionDate BETWEEN :startDate AND :endDate")
+    BigDecimal sumByCardAndDateRange(UUID cardId, LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT COUNT(t) FROM Transaction t " +
+           "WHERE t.card.id = :cardId AND t.type = 'EXPENSE' " +
+           "AND t.transactionDate BETWEEN :startDate AND :endDate")
+    long countByCardAndDateRange(UUID cardId, LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT t FROM Transaction t JOIN FETCH t.category " +
+           "WHERE t.card.id = :cardId AND t.type = 'EXPENSE' " +
+           "AND t.transactionDate BETWEEN :startDate AND :endDate " +
+           "ORDER BY t.transactionDate DESC")
+    List<Transaction> findByCardAndDateRange(UUID cardId, LocalDate startDate, LocalDate endDate);
 }

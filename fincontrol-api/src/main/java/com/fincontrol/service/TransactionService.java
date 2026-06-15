@@ -2,11 +2,13 @@ package com.fincontrol.service;
 
 import com.fincontrol.dto.request.TransactionRequest;
 import com.fincontrol.dto.response.TransactionResponse;
+import com.fincontrol.entity.Card;
 import com.fincontrol.entity.Category;
 import com.fincontrol.entity.Transaction;
 import com.fincontrol.entity.User;
 import com.fincontrol.enums.TransactionType;
 import com.fincontrol.exception.ResourceNotFoundException;
+import com.fincontrol.repository.CardRepository;
 import com.fincontrol.repository.CategoryRepository;
 import com.fincontrol.repository.TransactionRepository;
 import com.fincontrol.repository.UserRepository;
@@ -28,6 +30,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
+    private final CardRepository cardRepository;
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
@@ -67,10 +70,12 @@ public class TransactionService {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .filter(c -> c.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Category", request.getCategoryId()));
+        Card card = resolveCard(userId, request.getCardId());
 
         Transaction transaction = Transaction.builder()
                 .user(user)
                 .category(category)
+                .card(card)
                 .type(request.getType())
                 .description(request.getDescription())
                 .amount(request.getAmount())
@@ -115,8 +120,10 @@ public class TransactionService {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .filter(c -> c.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Category", request.getCategoryId()));
+        Card card = resolveCard(userId, request.getCardId());
 
         transaction.setCategory(category);
+        transaction.setCard(card);
         transaction.setType(request.getType());
         transaction.setDescription(request.getDescription());
         transaction.setAmount(request.getAmount());
@@ -199,6 +206,7 @@ public class TransactionService {
             Transaction installment = Transaction.builder()
                     .user(user)
                     .category(category)
+                    .card(original.getCard())
                     .type(original.getType())
                     .description(original.getDescription())
                     .amount(original.getAmount())
@@ -227,6 +235,7 @@ public class TransactionService {
             Transaction copy = Transaction.builder()
                     .user(user)
                     .category(category)
+                    .card(original.getCard())
                     .type(original.getType())
                     .description(original.getDescription())
                     .amount(original.getAmount())
@@ -246,12 +255,21 @@ public class TransactionService {
         transactionRepository.saveAll(futureRecurring);
     }
 
+    private Card resolveCard(UUID userId, UUID cardId) {
+        if (cardId == null) return null;
+        return cardRepository.findByIdAndUserId(cardId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card", cardId));
+    }
+
     private TransactionResponse toResponse(Transaction t) {
         return TransactionResponse.builder()
                 .id(t.getId())
                 .categoryId(t.getCategory().getId())
                 .categoryName(t.getCategory().getName())
                 .categoryColor(t.getCategory().getColor())
+                .cardId(t.getCard() != null ? t.getCard().getId() : null)
+                .cardName(t.getCard() != null ? t.getCard().getName() : null)
+                .cardColor(t.getCard() != null ? t.getCard().getColor() : null)
                 .type(t.getType())
                 .description(t.getDescription())
                 .amount(t.getAmount())

@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ArrowLeftRight, Tag, Settings, LogOut, Moon, Sun, FlaskConical } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Tag, Settings, LogOut, Moon, Sun, FlaskConical, CreditCard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/transactions', label: 'Transacoes', icon: ArrowLeftRight },
+  { to: '/cards', label: 'Cartoes', icon: CreditCard },
   { to: '/simulations', label: 'Simulacoes', icon: FlaskConical },
   { to: '/categories', label: 'Categorias', icon: Tag },
   { to: '/monthly-reference', label: 'Referencia Mensal', icon: Settings },

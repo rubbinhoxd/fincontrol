@@ -14,6 +14,8 @@ public class TransactionRequest {
     @NotNull
     private UUID categoryId;
 
+    private UUID cardId;
+
     @NotNull
     private TransactionType type;
 

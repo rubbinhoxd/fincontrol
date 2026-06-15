@@ -31,6 +31,9 @@ export interface Transaction {
   essential: boolean;
   impulse: boolean;
   notes: string | null;
+  cardId: string | null;
+  cardName: string | null;
+  cardColor: string | null;
   recurringGroupId: string | null;
   installmentGroupId: string | null;
   currentInstallment: number | null;
@@ -51,6 +54,7 @@ export interface TransactionRequest {
   essential: boolean;
   impulse: boolean;
   notes: string | null;
+  cardId: string | null;
   activateRecurring: boolean;
   installment: boolean;
   currentInstallment: number | null;
@@ -120,4 +124,47 @@ export interface SimulationRequest {
   yearMonth: string;
   salaryOverride: number | null;
   items: SimulatedItem[];
+}
+
+export interface Card {
+  id: string;
+  name: string;
+  color: string | null;
+  brand: string | null;
+  closingDay: number;
+  dueDay: number;
+  creditLimit: number;
+  active: boolean;
+}
+
+export interface CardCycle {
+  id: string;
+  name: string;
+  color: string | null;
+  brand: string | null;
+  closingDay: number;
+  dueDay: number;
+  creditLimit: number;
+  cycleStart: string;
+  cycleEnd: string;
+  totalSpent: number;
+  percentOfLimit: number;
+  percentOfSalary: number;
+  daysUntilClosing: number;
+  transactionCount: number;
+  closed: boolean;
+}
+
+export interface CardCycleDetail {
+  cycle: CardCycle;
+  transactions: Transaction[];
+}
+
+export interface CardRequest {
+  name: string;
+  color: string | null;
+  brand: string | null;
+  closingDay: number;
+  dueDay: number;
+  creditLimit: number;
 }

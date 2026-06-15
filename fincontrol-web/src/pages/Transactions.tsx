@@ -195,6 +195,12 @@ export default function Transactions() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
+                      {t.cardName && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded inline-flex items-center gap-1" style={t.cardColor ? { backgroundColor: `${t.cardColor}22`, color: t.cardColor } : { backgroundColor: '#e5e7eb', color: '#374151' }}>
+                          {t.cardColor && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.cardColor }} />}
+                          {t.cardName}
+                        </span>
+                      )}
                       {t.currentInstallment && t.totalInstallments && <Tag label={`${t.currentInstallment}/${t.totalInstallments}`} color="bg-indigo-100 text-indigo-700" />}
                       {t.impulse && <Tag label="Impulso" color="bg-red-100 text-red-700" />}
                       {!t.planned && !t.impulse && <Tag label="Nao planejado" color="bg-orange-100 text-orange-700" />}

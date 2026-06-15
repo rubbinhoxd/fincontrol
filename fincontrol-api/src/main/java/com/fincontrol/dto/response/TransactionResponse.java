@@ -18,6 +18,9 @@ public class TransactionResponse {
     private UUID categoryId;
     private String categoryName;
     private String categoryColor;
+    private UUID cardId;
+    private String cardName;
+    private String cardColor;
     private TransactionType type;
     private String description;
     private BigDecimal amount;

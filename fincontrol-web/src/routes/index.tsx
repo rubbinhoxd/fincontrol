@@ -6,6 +6,8 @@ import Dashboard from '../pages/Dashboard';
 import Transactions from '../pages/Transactions';
 import TransactionForm from '../pages/TransactionForm';
 import Simulations from '../pages/Simulations';
+import Cards from '../pages/Cards';
+import CardCycleDetail from '../pages/CardCycleDetail';
 import Categories from '../pages/Categories';
 import MonthlyReference from '../pages/MonthlyReference';
 
@@ -33,6 +35,8 @@ export default function AppRoutes() {
           <Route path="/transactions/new" element={<TransactionForm />} />
           <Route path="/transactions/:id/edit" element={<TransactionForm />} />
           <Route path="/simulations" element={<Simulations />} />
+          <Route path="/cards" element={<Cards />} />
+          <Route path="/cards/:id" element={<CardCycleDetail />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/monthly-reference" element={<MonthlyReference />} />
         </Route>

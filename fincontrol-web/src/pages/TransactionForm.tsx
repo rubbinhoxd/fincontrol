@@ -4,7 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import PageContainer from '../components/layout/PageContainer';
 import { createTransaction, getTransaction, updateTransaction } from '../api/transactions';
 import { listCategories } from '../api/categories';
-import type { Category, TransactionType, TransactionRequest } from '../types';
+import { listCards } from '../api/cards';
+import type { Category, TransactionType, TransactionRequest, Card } from '../types';
 
 export default function TransactionForm() {
   const { id } = useParams();
@@ -12,6 +13,7 @@ export default function TransactionForm() {
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isExistingInstallment, setIsExistingInstallment] = useState(false);
@@ -31,6 +33,7 @@ export default function TransactionForm() {
     essential: true,
     impulse: false,
     notes: null,
+    cardId: null,
     activateRecurring: false,
     installment: false,
     currentInstallment: null,
@@ -39,6 +42,7 @@ export default function TransactionForm() {
 
   useEffect(() => {
     listCategories().then((res) => setCategories(res.data));
+    listCards().then((res) => setCards(res.data));
   }, []);
 
   useEffect(() => {
@@ -63,6 +67,7 @@ export default function TransactionForm() {
           essential: t.essential,
           impulse: t.impulse,
           notes: t.notes,
+          cardId: t.cardId,
           activateRecurring: false,
           installment: hasInstallment,
           currentInstallment: t.currentInstallment,
@@ -175,6 +180,21 @@ export default function TransactionForm() {
               ))}
             </select>
           </Field>
+
+          {form.type === 'EXPENSE' && cards.length > 0 && (
+            <Field label="Cartao (opcional)">
+              <select
+                value={form.cardId ?? ''}
+                onChange={(e) => update('cardId', e.target.value || null)}
+                className="input"
+              >
+                <option value="">Sem cartao (PIX/debito/dinheiro)</option>
+                {cards.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </Field>
+          )}
         </div>
 
         {form.type === 'EXPENSE' && (
