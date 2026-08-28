@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import pino from 'pino';
 import { config } from './config.js';
-import { LlmResponse } from './types.js';
+import { FaturaLlmResponse, LlmResponse } from './types.js';
 
 const logger = pino({ level: config.logLevel }).child({ mod: 'llm' });
 
@@ -41,6 +41,66 @@ export async function interpret(systemPrompt: string, userMessage: string): Prom
   } catch (err) {
     logger.error({ raw }, 'JSON invalido do LLM');
     throw new Error('LLM devolveu JSON invalido');
+  }
+
+  return parsed;
+}
+
+/**
+ * Chama Claude Haiku em modo VISION com uma imagem de fatura.
+ * A imagem vai como bloco `image` base64. Retorna o array de transacoes ja parseado.
+ */
+export async function interpretFatura(
+  systemPrompt: string,
+  imageBase64: string,
+  mimeType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' = 'image/jpeg'
+): Promise<FaturaLlmResponse> {
+  const started = Date.now();
+
+  const response = await client.messages.create({
+    model: config.anthropic.model,
+    max_tokens: 4096, // fatura pode ter muitas linhas
+    system: systemPrompt,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: mimeType,
+              data: imageBase64,
+            },
+          },
+          {
+            type: 'text',
+            text: 'Extraia todas as compras da fatura conforme as regras. Responda apenas com o JSON.',
+          },
+        ],
+      },
+    ],
+  });
+
+  const elapsed = Date.now() - started;
+
+  const raw = response.content
+    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+    .map((block) => block.text)
+    .join('')
+    .trim();
+
+  logger.info({ elapsed, tokens: response.usage }, 'Resposta LLM (fatura)');
+  logger.debug({ raw }, 'Raw LLM output (fatura)');
+
+  const jsonText = extractJson(raw);
+
+  let parsed: FaturaLlmResponse;
+  try {
+    parsed = JSON.parse(jsonText) as FaturaLlmResponse;
+  } catch (err) {
+    logger.error({ raw }, 'JSON invalido do LLM (fatura)');
+    throw new Error('LLM devolveu JSON invalido para a fatura');
   }
 
   return parsed;

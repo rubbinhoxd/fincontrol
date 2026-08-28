@@ -180,3 +180,110 @@ Msg: "bom dia"
 
 Retorne APENAS o JSON. Sem texto explicativo antes ou depois.`;
 }
+
+/**
+ * Prompt especifico pra parseamento de imagem de fatura.
+ * Focado em extracao (nao suporta outros intents).
+ */
+export function buildFaturaPrompt(
+  categories: Category[],
+  cards: Card[],
+  caption: string
+): string {
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+
+  const categoriesList = categories
+    .map((c) => `- ${c.name} (${c.type}) → id: ${c.id}`)
+    .join('\n');
+
+  const cardsList =
+    cards.length === 0
+      ? '(nenhum cartao cadastrado)'
+      : cards
+          .map((c) => `- ${c.name}${c.shared ? ' [compartilhado]' : ''} → id: ${c.id}`)
+          .join('\n');
+
+  return `Voce recebeu uma IMAGEM de uma FATURA de cartao de credito brasileiro (Banco do Brasil, Nubank, Itau, Santander, Bradesco ou similar).
+
+Data de hoje (America/Sao_Paulo): ${today}
+
+CATEGORIAS DISPONIVEIS:
+${categoriesList}
+
+CARTOES DISPONIVEIS:
+${cardsList}
+
+LEGENDA DO USUARIO (dica opcional, pode estar vazia): "${caption}"
+
+TAREFA:
+Extraia SOMENTE as linhas de compra reais da fatura. Cada linha extraida deve corresponder a uma transacao de gasto do titular do cartao.
+
+*** O QUE NUNCA IMPORTAR (ignore essas linhas completamente): ***
+- Total da fatura, valor total, "R$ X,XX" que aparece grande no topo
+- Saldo anterior / Saldo devedor
+- Data de vencimento, data de fechamento
+- Toda a secao "CRÉDITOS" ou "PAGAMENTOS RECEBIDOS" (sao entradas: pagamentos da fatura anterior, estornos, cashback). Valores negativos, com "-" ou palavras tipo "Pgto.", "Pagamento", "Credito", "Estorno".
+- Encargos, juros, IOF, tarifas, anuidade, "Ver encargos"
+- Subtotais de secao (ex: "COMPRAS À VISTA R$ 4.675,79" — isso e o cabecalho da secao, nao uma compra)
+- Cabecalhos, tabs de navegacao (nomes de meses tipo "JUL AGO SET OUT"), botoes ("PAGAR FATURA")
+
+*** O QUE IMPORTAR: ***
+Linhas individuais de compra, tanto da secao "COMPRAS À VISTA" quanto "EM PROCESSAMENTO" (BB) ou equivalentes de outros bancos ("PROCESSADAS", "PENDENTES", "COMPRAS PARCELADAS", etc).
+
+REGRAS DE EXTRACAO:
+1. type: SEMPRE "EXPENSE"
+2. transactionDate: extraia so a data (YYYY-MM-DD), ignore horario.
+   - Formato BB: "28/07/2026 às 19:46:47" → "2026-07-28"
+   - Formato compacto "28/07" → assuma o ano da fatura ({today}: se hoje e agosto de 2026 e a linha diz "28/07", ano 2026)
+3. description: nome do estabelecimento. Limpe o codigo Parc= se houver (regra 7). Mantenha o nome principal (ex: "Baciodilatte-lj0111 Fortaleza" → "Baciodilatte Lj0111"; "Drogasil 2239 Fortaleza" → "Drogasil 2239"). Nao precisa incluir "Br", "Fortaleza" e cidade no nome — mas se estiver junto e ambiguo, pode manter.
+4. amount: valor da linha (positivo, so numero).
+5. installment: SEMPRE false
+6. currentInstallment: null
+7. totalInstallments: null
+   - Se a fatura mostrar "3/10" claramente, incorpore isso na descricao (ex: "CAMISA (3/10)")
+   - **ESPECIFICIDADE BANCO DO BRASIL**: quando o nome comeca com "Parc=NXX" (compra parcelada ainda em processamento, o codigo vem COLADO no nome do estabelecimento):
+     - O PRIMEIRO digito apos o "=" NAO conta (sempre "1" no BB)
+     - Os digitos seguintes sao o total de parcelas
+     - Exemplos:
+       * "Parc=104consultoria Dra L" → total=4, descricao vira "Consultoria Dra L (4x)"
+       * "Parc=112ifood" → total=12, descricao vira "Ifood (12x)"
+       * "Parc=103amazon br" → total=3, descricao vira "Amazon Br (3x)"
+     - Mantenha installment=false (nao propaga parcelas futuras — a fatura ja mostra o valor da parcela atual)
+8. categoryId: escolha da lista pelo nome do estabelecimento. Se nao souber, use a categoria "Outros" do tipo EXPENSE.
+9. cardId (regras em ordem de prioridade):
+   a) Se a LEGENDA mencionar um cartao ("fatura do BB", "essa e do Nubank", "cartao BB Principal"), tagueie TODAS as transacoes com esse cardId.
+   b) Se a IMAGEM claramente mostra o cartao no cabecalho, use esse.
+   c) Se nao houver indicacao, deixe null (usuario tagueia depois via edicao).
+10. Flags padrao: planned=true, fixed=false, recurring=false, subscription=false, impulse=false, sharedWithPartner=false.
+    - essential: infira da categoria (Alimentacao/Saude/Moradia/Transporte=true; Lazer/Assinaturas/Vestuario=false; Outros=false).
+    - subscription: true se claramente for assinatura (Netflix, Spotify, Disney, Prime, Apple, YouTube Premium).
+
+RETORNE APENAS UM JSON NO FORMATO EXATO:
+{
+  "intent": "import_fatura",
+  "cardHint": "<nome do cartao detectado ou null>",
+  "notes": "<observacao curta opcional, ex: 'fatura BB fechada em agosto/2026'>",
+  "transactions": [
+    {
+      "description": string,
+      "amount": number > 0,
+      "categoryId": uuid,
+      "cardId": uuid | null,
+      "type": "EXPENSE",
+      "transactionDate": "YYYY-MM-DD",
+      "planned": true,
+      "fixed": false,
+      "recurring": false,
+      "subscription": bool,
+      "essential": bool,
+      "impulse": false,
+      "sharedWithPartner": false,
+      "installment": false,
+      "currentInstallment": null,
+      "totalInstallments": null
+    }
+  ]
+}
+
+Sem markdown, sem crases, sem texto explicativo. Apenas o JSON.`;
+}

@@ -85,3 +85,19 @@ export type LlmResponse =
       };
     }
   | { intent: 'other'; reason?: string };
+
+// Resposta do LLM quando esta parseando uma imagem de fatura.
+export interface FaturaLlmResponse {
+  intent: 'import_fatura';
+  transactions: LlmParsedTransaction[];
+  cardHint?: string | null;
+  notes?: string | null;
+}
+
+// Estado pendente de importacao de fatura por JID (in-memory, com TTL).
+export interface PendingImport {
+  transactions: LlmParsedTransaction[];
+  preview: string;
+  createdAt: number;
+  cardHint?: string | null;
+}
