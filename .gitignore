@@ -7,6 +7,9 @@ fincontrol-api/target/
 # Node
 fincontrol-web/node_modules/
 fincontrol-web/dist/
+fincontrol-bot/node_modules/
+fincontrol-bot/dist/
+fincontrol-bot/auth_info/
 
 # IDE
 .idea/
