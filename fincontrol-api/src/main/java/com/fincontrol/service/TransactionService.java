@@ -92,6 +92,7 @@ public class TransactionService {
                 .build();
 
         if (Boolean.TRUE.equals(request.getInstallment())) {
+            // Fluxo original: cadastro manual com "parcelamento" ativo → cria futuras
             validateInstallmentFields(request);
             UUID groupId = UUID.randomUUID();
 
@@ -101,12 +102,16 @@ public class TransactionService {
 
             transaction = transactionRepository.save(transaction);
             createFutureInstallments(transaction, user, category, groupId);
-        } else if (Boolean.TRUE.equals(request.getRecurring()) && !Boolean.TRUE.equals(request.getInstallment())) {
+        } else if (Boolean.TRUE.equals(request.getRecurring())) {
             UUID groupId = UUID.randomUUID();
             transaction.setRecurringGroupId(groupId);
+            // Parcelamento "standalone" pode coexistir com recorrencia (raro, mas suportado)
+            applyStandaloneInstallmentMetadata(transaction, request);
             transaction = transactionRepository.save(transaction);
             createFutureRecurring(transaction, user, category, groupId);
         } else {
+            // Parcelamento "standalone" (ex: importado de fatura): persiste os campos SEM gerar futuras
+            applyStandaloneInstallmentMetadata(transaction, request);
             transaction = transactionRepository.save(transaction);
         }
 
@@ -178,6 +183,28 @@ public class TransactionService {
         }
 
         transactionRepository.delete(transaction);
+    }
+
+    /**
+     * Aplica os campos de parcela sem disparar a criacao de futuras parcelas.
+     * Usado quando a transacao vem de uma fatura importada (cada parcela ja tem sua
+     * propria linha na fatura mensal — nao queremos duplicar).
+     * totalInstallments e obrigatorio; currentInstallment e opcional (BB "em processamento"
+     * so mostra o total).
+     */
+    private void applyStandaloneInstallmentMetadata(Transaction transaction, TransactionRequest request) {
+        Integer total = request.getTotalInstallments();
+        if (total == null) return;
+        if (total < 2) {
+            throw new IllegalArgumentException("totalInstallments deve ser >= 2");
+        }
+        Integer current = request.getCurrentInstallment();
+        if (current != null && (current < 1 || current > total)) {
+            throw new IllegalArgumentException("currentInstallment fora do intervalo permitido");
+        }
+        transaction.setTotalInstallments(total);
+        transaction.setCurrentInstallment(current);
+        // installmentGroupId permanece null — nao ha grupo pra propagar
     }
 
     private void validateInstallmentFields(TransactionRequest request) {

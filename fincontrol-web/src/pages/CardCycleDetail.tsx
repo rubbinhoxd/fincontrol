@@ -129,9 +129,9 @@ export default function CardCycleDetail() {
                         <td className="px-4 py-2 text-sm dark:text-gray-300">{formatDate(t.transactionDate)}</td>
                         <td className="px-4 py-2 text-sm font-medium dark:text-gray-100">
                           {t.description}
-                          {t.currentInstallment && t.totalInstallments && (
+                          {t.totalInstallments && (
                             <span className="ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">
-                              {t.currentInstallment}/{t.totalInstallments}
+                              {t.currentInstallment ? `${t.currentInstallment}/${t.totalInstallments}` : `${t.totalInstallments}x`}
                             </span>
                           )}
                           {t.sharedWithPartner && (

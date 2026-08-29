@@ -59,7 +59,7 @@ export async function interpretFatura(
 
   const response = await client.messages.create({
     model: config.anthropic.model,
-    max_tokens: 4096, // fatura pode ter muitas linhas
+    max_tokens: 8192, // fatura pode ter 30+ linhas; folga pra nao cortar JSON no meio
     system: systemPrompt,
     messages: [
       {

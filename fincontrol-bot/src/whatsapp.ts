@@ -4,11 +4,69 @@ import makeWASocket, {
   useMultiFileAuthState,
   WASocket,
 } from '@whiskeysockets/baileys';
+import { rm } from 'node:fs/promises';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import { config, setupMode } from './config.js';
 
 const logger = pino({ level: config.logLevel }).child({ mod: 'wa' });
+
+// Auto-recovery: detecta corrupcao de sessao (Bad MAC, MessageCounterError, etc)
+// e limpa o auth_info automaticamente. O container reinicia via docker restart policy.
+const DECRYPT_ERROR_WINDOW_MS = 60_000;
+const DECRYPT_ERROR_THRESHOLD = 5;
+const decryptErrorState = { count: 0, windowStart: 0 };
+let recoveryInProgress = false;
+
+function installSessionCorruptionDetector() {
+  const originalError = console.error.bind(console);
+  const originalLog = console.log.bind(console);
+
+  const inspect = (args: unknown[]) => {
+    const text = args.map((a) => String(a)).join(' ');
+    if (
+      text.includes('Bad MAC') ||
+      text.includes('MessageCounterError') ||
+      text.includes('Failed to decrypt message')
+    ) {
+      const now = Date.now();
+      if (now - decryptErrorState.windowStart > DECRYPT_ERROR_WINDOW_MS) {
+        decryptErrorState.windowStart = now;
+        decryptErrorState.count = 1;
+      } else {
+        decryptErrorState.count += 1;
+        if (decryptErrorState.count >= DECRYPT_ERROR_THRESHOLD && !recoveryInProgress) {
+          recoveryInProgress = true;
+          triggerAutoRecovery().catch((e) => logger.error({ err: e }, 'Auto-recovery falhou'));
+        }
+      }
+    }
+  };
+
+  console.error = (...args: any[]) => {
+    inspect(args);
+    originalError(...args);
+  };
+  console.log = (...args: any[]) => {
+    inspect(args);
+    originalLog(...args);
+  };
+}
+
+async function triggerAutoRecovery() {
+  logger.error(
+    { threshold: DECRYPT_ERROR_THRESHOLD, windowMs: DECRYPT_ERROR_WINDOW_MS },
+    'AUTO-RECOVERY: sessao corrompida detectada. Limpando auth_info e reiniciando. Um NOVO QR CODE aparecera no proximo boot.'
+  );
+  try {
+    await rm(config.whatsapp.authDir, { recursive: true, force: true });
+    logger.info('auth_info removido. Encerrando processo — Docker vai reiniciar e um QR novo sera gerado.');
+  } catch (err) {
+    logger.error({ err }, 'Falha ao remover auth_info');
+  }
+  // Delay pequeno pra garantir que os logs saem
+  setTimeout(() => process.exit(1), 500);
+}
 
 export type IncomingMessage = {
   jid: string;
@@ -27,12 +85,20 @@ export type ReplyFn = (jid: string, text: string) => Promise<void>;
 export async function startWhatsApp(
   onMessage: (msg: IncomingMessage, reply: ReplyFn) => Promise<void>
 ): Promise<ReplyFn> {
+  installSessionCorruptionDetector();
+
   const { state, saveCreds } = await useMultiFileAuthState(config.whatsapp.authDir);
 
   const sock: WASocket = makeWASocket({
     auth: state,
     printQRInTerminal: false,
     logger: pino({ level: 'silent' }) as any,
+    // Opcoes de estabilidade — reduzem superficie de corrupcao de sessao
+    syncFullHistory: false,        // nao tenta puxar historico completo (menos msgs criptografadas em backlog)
+    keepAliveIntervalMs: 25_000,   // ping regular pro WhatsApp nao considerar dispositivo dormente
+    retryRequestDelayMs: 500,      // mais tolerante a retries transientes
+    connectTimeoutMs: 60_000,      // 60s pra conectar (padrao e menor)
+    defaultQueryTimeoutMs: 60_000,
   });
 
   sock.ev.on('creds.update', saveCreds);

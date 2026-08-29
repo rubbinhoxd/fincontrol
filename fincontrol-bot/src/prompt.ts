@@ -236,19 +236,32 @@ REGRAS DE EXTRACAO:
    - Formato BB: "28/07/2026 às 19:46:47" → "2026-07-28"
    - Formato compacto "28/07" → assuma o ano da fatura ({today}: se hoje e agosto de 2026 e a linha diz "28/07", ano 2026)
 3. description: nome do estabelecimento. Limpe o codigo Parc= se houver (regra 7). Mantenha o nome principal (ex: "Baciodilatte-lj0111 Fortaleza" → "Baciodilatte Lj0111"; "Drogasil 2239 Fortaleza" → "Drogasil 2239"). Nao precisa incluir "Br", "Fortaleza" e cidade no nome — mas se estiver junto e ambiguo, pode manter.
-4. amount: valor da linha (positivo, so numero).
-5. installment: SEMPRE false
-6. currentInstallment: null
-7. totalInstallments: null
-   - Se a fatura mostrar "3/10" claramente, incorpore isso na descricao (ex: "CAMISA (3/10)")
-   - **ESPECIFICIDADE BANCO DO BRASIL**: quando o nome comeca com "Parc=NXX" (compra parcelada ainda em processamento, o codigo vem COLADO no nome do estabelecimento):
-     - O PRIMEIRO digito apos o "=" NAO conta (sempre "1" no BB)
-     - Os digitos seguintes sao o total de parcelas
-     - Exemplos:
-       * "Parc=104consultoria Dra L" → total=4, descricao vira "Consultoria Dra L (4x)"
-       * "Parc=112ifood" → total=12, descricao vira "Ifood (12x)"
-       * "Parc=103amazon br" → total=3, descricao vira "Amazon Br (3x)"
-     - Mantenha installment=false (nao propaga parcelas futuras — a fatura ja mostra o valor da parcela atual)
+4. amount: valor DA PARCELA (nao o total). Regras:
+   - Compra a vista (nao parcelada): amount = valor exibido na linha (nao precisa mexer)
+   - Parcelada com "X/Y" visivel: amount = valor exibido (esse formato ja mostra o valor daquela parcela especifica, nao dividir)
+   - **BB "em processamento" com codigo "Parc=NXX"**: o valor exibido e o TOTAL DA COMPRA (todas as parcelas somadas). Divida pelo totalInstallments pra obter o valor da parcela.
+     Exemplos:
+     * "Parc=112steam R$ 351,20" → totalInstallments=12, amount = 351,20 / 12 = 29.27 (arredonda pra 2 casas)
+     * "Parc=104consultoria Dra L R$ 1.000,00" → totalInstallments=4, amount = 1000 / 4 = 250.00
+     * "Parc=103amazon R$ 300,00" → totalInstallments=3, amount = 300 / 3 = 100.00
+5-7. PARCELAMENTO — como tratar (ordem: detecta → seta os 3 campos):
+   Se a linha da fatura NAO for parcelada: installment=false, currentInstallment=null, totalInstallments=null.
+
+   Se a linha da fatura FOR parcelada, ative o fluxo de parcelamento no sistema:
+   - installment: **true** (isso faz o backend criar as parcelas futuras automaticamente, ex: se e 1/12 hoje, o sistema cria 2/12, 3/12, ... 12/12 nos meses seguintes)
+   - Detecte o total e a parcela atual:
+     * Se aparecer "X/Y" claro na linha (ex: "3/10"): currentInstallment=X, totalInstallments=Y
+     * **ESPECIFICIDADE BANCO DO BRASIL "em processamento"**: quando o nome comeca com "Parc=NXX" (o codigo vem COLADO no nome do estabelecimento):
+       - O PRIMEIRO digito apos o "=" NAO conta (sempre "1" no BB)
+       - Os digitos seguintes sao o total de parcelas
+       - "Parc=NXX" no BB significa que a compra esta em processamento — assume-se que e a PRIMEIRA parcela (currentInstallment=1)
+       - Exemplos:
+         * "Parc=104consultoria Dra L" → currentInstallment=1, totalInstallments=4, description="Consultoria Dra L"
+         * "Parc=112steam" → currentInstallment=1, totalInstallments=12, description="Steam"
+         * "Parc=103amazon br" → currentInstallment=1, totalInstallments=3, description="Amazon Br"
+   - LIMPE o codigo "Parc=NXX" da descricao — nao escreva "(12x)" no nome; o app ja mostra badge automatico
+
+IMPORTANTE: o usuario e responsavel por evitar duplicacao (ele corta a fatura antes de mandar, deixando so o que e novo). Se voce detectar parcelamento, SEMPRE ative installment=true — o sistema cuida do resto.
 8. categoryId: escolha da lista pelo nome do estabelecimento. Se nao souber, use a categoria "Outros" do tipo EXPENSE.
 9. cardId (regras em ordem de prioridade):
    a) Se a LEGENDA mencionar um cartao ("fatura do BB", "essa e do Nubank", "cartao BB Principal"), tagueie TODAS as transacoes com esse cardId.
@@ -279,8 +292,8 @@ RETORNE APENAS UM JSON NO FORMATO EXATO:
       "impulse": false,
       "sharedWithPartner": false,
       "installment": false,
-      "currentInstallment": null,
-      "totalInstallments": null
+      "currentInstallment": integer | null,
+      "totalInstallments": integer | null
     }
   ]
 }
