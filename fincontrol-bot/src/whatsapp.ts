@@ -4,7 +4,9 @@ import makeWASocket, {
   useMultiFileAuthState,
   WASocket,
 } from '@whiskeysockets/baileys';
-import { rm } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import { config, setupMode } from './config.js';
@@ -13,10 +15,43 @@ const logger = pino({ level: config.logLevel }).child({ mod: 'wa' });
 
 // Auto-recovery: detecta corrupcao de sessao (Bad MAC, MessageCounterError, etc)
 // e limpa o auth_info automaticamente. O container reinicia via docker restart policy.
-const DECRYPT_ERROR_WINDOW_MS = 60_000;
-const DECRYPT_ERROR_THRESHOLD = 5;
-const decryptErrorState = { count: 0, windowStart: 0 };
+//
+// Persiste contador em disco pra sobreviver a restarts. Cenario tipico: sessao
+// corrompida causa timeouts que fazem o processo crashar antes de acumular erros
+// em memoria. Contador persistido garante que a gente detecta corrupcao mesmo
+// atraves de crashes.
+const DECRYPT_ERROR_WINDOW_MS = 30_000;
+const DECRYPT_ERROR_THRESHOLD = 2;
+const RECOVERY_COOLDOWN_MS = 5 * 60_000; // 5min entre recoveries — evita loop se algo estiver muito errado
 let recoveryInProgress = false;
+
+interface ErrorState {
+  count: number;
+  windowStart: number;
+  lastRecoveryAt: number;
+}
+
+function stateFile(): string {
+  return join(config.whatsapp.authDir, '.recovery-state.json');
+}
+
+function loadState(): ErrorState {
+  try {
+    if (existsSync(stateFile())) {
+      const raw = require('node:fs').readFileSync(stateFile(), 'utf8');
+      return JSON.parse(raw);
+    }
+  } catch {}
+  return { count: 0, windowStart: 0, lastRecoveryAt: 0 };
+}
+
+async function saveState(s: ErrorState) {
+  try {
+    await writeFile(stateFile(), JSON.stringify(s));
+  } catch (err) {
+    logger.warn({ err }, 'Falha ao persistir estado de recovery');
+  }
+}
 
 function installSessionCorruptionDetector() {
   const originalError = console.error.bind(console);
@@ -25,20 +60,31 @@ function installSessionCorruptionDetector() {
   const inspect = (args: unknown[]) => {
     const text = args.map((a) => String(a)).join(' ');
     if (
-      text.includes('Bad MAC') ||
-      text.includes('MessageCounterError') ||
-      text.includes('Failed to decrypt message')
+      !recoveryInProgress &&
+      (text.includes('Bad MAC') ||
+        text.includes('MessageCounterError') ||
+        text.includes('Failed to decrypt message'))
     ) {
+      const state = loadState();
       const now = Date.now();
-      if (now - decryptErrorState.windowStart > DECRYPT_ERROR_WINDOW_MS) {
-        decryptErrorState.windowStart = now;
-        decryptErrorState.count = 1;
+
+      // Nao dispara recovery em cooldown (evita loop)
+      if (now - state.lastRecoveryAt < RECOVERY_COOLDOWN_MS) {
+        return;
+      }
+
+      if (now - state.windowStart > DECRYPT_ERROR_WINDOW_MS) {
+        state.windowStart = now;
+        state.count = 1;
       } else {
-        decryptErrorState.count += 1;
-        if (decryptErrorState.count >= DECRYPT_ERROR_THRESHOLD && !recoveryInProgress) {
-          recoveryInProgress = true;
-          triggerAutoRecovery().catch((e) => logger.error({ err: e }, 'Auto-recovery falhou'));
-        }
+        state.count += 1;
+      }
+
+      saveState(state).catch(() => {});
+
+      if (state.count >= DECRYPT_ERROR_THRESHOLD) {
+        recoveryInProgress = true;
+        triggerAutoRecovery(state).catch((e) => logger.error({ err: e }, 'Auto-recovery falhou'));
       }
     }
   };
@@ -53,18 +99,20 @@ function installSessionCorruptionDetector() {
   };
 }
 
-async function triggerAutoRecovery() {
+async function triggerAutoRecovery(state: ErrorState) {
   logger.error(
-    { threshold: DECRYPT_ERROR_THRESHOLD, windowMs: DECRYPT_ERROR_WINDOW_MS },
+    { threshold: DECRYPT_ERROR_THRESHOLD, windowMs: DECRYPT_ERROR_WINDOW_MS, errors: state.count },
     'AUTO-RECOVERY: sessao corrompida detectada. Limpando auth_info e reiniciando. Um NOVO QR CODE aparecera no proximo boot.'
   );
   try {
     await rm(config.whatsapp.authDir, { recursive: true, force: true });
+    // Recria o diretorio e reseta o estado com o cooldown marcado
+    require('node:fs').mkdirSync(config.whatsapp.authDir, { recursive: true });
+    await saveState({ count: 0, windowStart: 0, lastRecoveryAt: Date.now() });
     logger.info('auth_info removido. Encerrando processo — Docker vai reiniciar e um QR novo sera gerado.');
   } catch (err) {
     logger.error({ err }, 'Falha ao remover auth_info');
   }
-  // Delay pequeno pra garantir que os logs saem
   setTimeout(() => process.exit(1), 500);
 }
 

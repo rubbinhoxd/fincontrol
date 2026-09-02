@@ -25,14 +25,38 @@ export class FincontrolClient {
     });
   }
 
+  /**
+   * Autentica com retry+backoff. Cobre o cenario onde o bot sobe antes da api
+   * estar pronta pra receber conexoes (comum no boot do docker compose).
+   */
   async login(): Promise<void> {
-    logger.info('Autenticando na fincontrol-api...');
-    const res = await this.http.post('/auth/login', {
-      email: config.fincontrol.email,
-      password: config.fincontrol.password,
-    });
-    this.jwt = res.data.token;
-    logger.info({ userName: res.data.name }, 'Login OK');
+    const maxAttempts = 20;
+    let attempt = 0;
+    while (true) {
+      attempt++;
+      try {
+        logger.info({ attempt }, 'Autenticando na fincontrol-api...');
+        const res = await this.http.post('/auth/login', {
+          email: config.fincontrol.email,
+          password: config.fincontrol.password,
+        });
+        this.jwt = res.data.token;
+        logger.info({ userName: res.data.name }, 'Login OK');
+        return;
+      } catch (err: any) {
+        const isRetryable =
+          err?.code === 'ECONNREFUSED' ||
+          err?.code === 'ECONNRESET' ||
+          err?.code === 'ETIMEDOUT' ||
+          err?.response?.status >= 500;
+        if (!isRetryable || attempt >= maxAttempts) {
+          throw err;
+        }
+        const delayMs = Math.min(1000 * Math.pow(1.5, attempt - 1), 10000); // backoff exponencial capado em 10s
+        logger.warn({ attempt, code: err?.code, delayMs }, 'Login falhou (retryable), aguardando antes do proximo retry');
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+    }
   }
 
   private authHeader() {
