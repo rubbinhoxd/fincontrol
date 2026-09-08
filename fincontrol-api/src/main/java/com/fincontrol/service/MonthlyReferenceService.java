@@ -25,9 +25,18 @@ public class MonthlyReferenceService {
                 .map(this::toResponse);
     }
 
+    /**
+     * Retorna a referencia efetiva de um mes:
+     * 1. Se ha uma referencia especifica para o mes → usa
+     * 2. Senao, usa a mais recente com yearMonth <= consultado (heranca do passado)
+     *
+     * Nunca "puxa do futuro": se voce esta em julho e so tem referencia em setembro,
+     * julho fica sem referencia (retorna null). Assim, mudar a referencia atual nao
+     * altera meses anteriores.
+     */
     public MonthlyReferenceResponse getEffectiveReference(UUID userId, String yearMonth) {
         return monthlyReferenceRepository.findByUserIdAndYearMonth(userId, yearMonth)
-                .or(() -> monthlyReferenceRepository.findLatestByUserId(userId))
+                .or(() -> monthlyReferenceRepository.findLatestUpToYearMonth(userId, yearMonth))
                 .map(this::toResponse)
                 .orElse(null);
     }
