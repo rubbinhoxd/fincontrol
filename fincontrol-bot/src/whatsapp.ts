@@ -54,11 +54,7 @@ async function saveState(s: ErrorState) {
 }
 
 function installSessionCorruptionDetector() {
-  const originalError = console.error.bind(console);
-  const originalLog = console.log.bind(console);
-
-  const inspect = (args: unknown[]) => {
-    const text = args.map((a) => String(a)).join(' ');
+  const inspect = (text: string) => {
     if (
       !recoveryInProgress &&
       (text.includes('Bad MAC') ||
@@ -81,6 +77,7 @@ function installSessionCorruptionDetector() {
       }
 
       saveState(state).catch(() => {});
+      logger.warn({ count: state.count, threshold: DECRYPT_ERROR_THRESHOLD }, 'Decrypt error detectado');
 
       if (state.count >= DECRYPT_ERROR_THRESHOLD) {
         recoveryInProgress = true;
@@ -89,13 +86,40 @@ function installSessionCorruptionDetector() {
     }
   };
 
+  // Intercepta os writes de stdout e stderr — pega TUDO independente de qual API
+  // foi usada (console.log, console.error, process.stderr.write, etc). Libsignal
+  // pode usar qualquer uma delas.
+  const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+  const originalStderrWrite = process.stderr.write.bind(process.stderr);
+
+  process.stdout.write = function (chunk: any, ...rest: any[]): boolean {
+    try {
+      inspect(typeof chunk === 'string' ? chunk : chunk?.toString?.() ?? '');
+    } catch {}
+    return (originalStdoutWrite as any)(chunk, ...rest);
+  } as any;
+
+  process.stderr.write = function (chunk: any, ...rest: any[]): boolean {
+    try {
+      inspect(typeof chunk === 'string' ? chunk : chunk?.toString?.() ?? '');
+    } catch {}
+    return (originalStderrWrite as any)(chunk, ...rest);
+  } as any;
+
+  // Tambem hooka console.* pra garantir cobertura (algumas libs ignoram stdout writes)
+  const originalConsoleError = console.error.bind(console);
+  const originalConsoleLog = console.log.bind(console);
   console.error = (...args: any[]) => {
-    inspect(args);
-    originalError(...args);
+    try {
+      inspect(args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' '));
+    } catch {}
+    originalConsoleError(...args);
   };
   console.log = (...args: any[]) => {
-    inspect(args);
-    originalLog(...args);
+    try {
+      inspect(args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' '));
+    } catch {}
+    originalConsoleLog(...args);
   };
 }
 
