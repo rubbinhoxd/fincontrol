@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import PageContainer from '../components/layout/PageContainer';
 import { listTransactions, deleteTransaction } from '../api/transactions';
 import { listCategories } from '../api/categories';
 import type { Transaction, Category, TransactionType } from '../types';
 import { formatCurrency } from '../utils/currency';
 import { formatDate, getCurrentYearMonth, formatYearMonth, previousYearMonth, nextYearMonth } from '../utils/date';
+
+type SortColumn = 'date' | 'description' | 'category' | 'amount';
 
 export default function Transactions() {
   const [yearMonth, setYearMonth] = useState(getCurrentYearMonth());
@@ -15,8 +17,17 @@ export default function Transactions() {
   const [filterType, setFilterType] = useState<TransactionType | ''>('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterClassification, setFilterClassification] = useState<'' | 'INSTALLMENT' | 'FIXED' | 'AVULSO'>('');
+  const [sort, setSort] = useState<{ column: SortColumn; direction: 'asc' | 'desc' } | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const toggleSort = (column: SortColumn) => {
+    setSort((current) => {
+      if (!current || current.column !== column) return { column, direction: 'asc' };
+      if (current.direction === 'asc') return { column, direction: 'desc' };
+      return null; // 3o clique volta pra ordem da api
+    });
+  };
 
   const load = () => {
     setLoading(true);
@@ -58,6 +69,22 @@ export default function Transactions() {
     if (filterClassification === 'AVULSO') return !t.fixed && t.installmentGroupId === null;
     return true;
   });
+
+  const sortedTransactions = sort
+    ? [...filteredTransactions].sort((a, b) => {
+        const dir = sort.direction === 'asc' ? 1 : -1;
+        switch (sort.column) {
+          case 'date':
+            return a.transactionDate.localeCompare(b.transactionDate) * dir;
+          case 'description':
+            return a.description.localeCompare(b.description, 'pt-BR', { sensitivity: 'base' }) * dir;
+          case 'category':
+            return (a.categoryName ?? '').localeCompare(b.categoryName ?? '', 'pt-BR', { sensitivity: 'base' }) * dir;
+          case 'amount':
+            return (a.amount - b.amount) * dir;
+        }
+      })
+    : filteredTransactions;
 
   const totalIncome = filteredTransactions.filter((t) => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0);
   const totalExpense = filteredTransactions.filter((t) => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0);
@@ -165,17 +192,17 @@ export default function Transactions() {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Data</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Descricao</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Categoria</th>
+                <SortableHeader label="Data" column="date" align="left" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="Descricao" column="description" align="left" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="Categoria" column="category" align="left" sort={sort} onToggle={toggleSort} />
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tipo</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
+                <SortableHeader label="Valor" column="amount" align="right" sort={sort} onToggle={toggleSort} />
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tags</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {filteredTransactions.map((t) => (
+              {sortedTransactions.map((t) => (
                 <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-4 py-3 text-sm">{formatDate(t.transactionDate)}</td>
                   <td className="px-4 py-3 text-sm font-medium">{t.description}</td>
@@ -237,4 +264,34 @@ export default function Transactions() {
 
 function Tag({ label, color }: { label: string; color: string }) {
   return <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${color}`}>{label}</span>;
+}
+
+function SortableHeader({
+  label,
+  column,
+  align,
+  sort,
+  onToggle,
+}: {
+  label: string;
+  column: SortColumn;
+  align: 'left' | 'right';
+  sort: { column: SortColumn; direction: 'asc' | 'desc' } | null;
+  onToggle: (column: SortColumn) => void;
+}) {
+  const active = sort?.column === column;
+  const Icon = active ? (sort!.direction === 'asc' ? ChevronUp : ChevronDown) : ChevronsUpDown;
+  return (
+    <th className={`px-4 py-3 text-xs font-medium uppercase ${align === 'right' ? 'text-right' : 'text-left'}`}>
+      <button
+        onClick={() => onToggle(column)}
+        className={`inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 transition-colors ${
+          active ? 'text-gray-700 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'
+        }`}
+      >
+        {label}
+        <Icon size={12} className={active ? '' : 'opacity-50'} />
+      </button>
+    </th>
+  );
 }
