@@ -114,11 +114,14 @@ if [ "\$EXISTS" != "0" ]; then
   exit 1
 fi
 
+# Garante que dblink esteja instalado antes da transacao (nao pode falhar silenciosamente)
+docker exec \$DB_CONTAINER psql -U \$DB_USER -d \$DB_MAIN -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS dblink;"
+
 # Copia os dados: users -> categories -> cards -> monthly_references -> transactions
 # (nessa ordem por causa das FKs)
+# ON_ERROR_STOP=1 pra qualquer erro no INSERT fazer o script abortar em vez de fingir sucesso
 echo "→ Copiando dados do user pro banco principal..."
-docker exec \$DB_CONTAINER psql -U \$DB_USER -d \$DB_MAIN <<SQL >/dev/null
-CREATE EXTENSION IF NOT EXISTS dblink;
+docker exec -i \$DB_CONTAINER psql -U \$DB_USER -d \$DB_MAIN -v ON_ERROR_STOP=1 <<SQL
 BEGIN;
 
 -- 1. user
@@ -154,7 +157,14 @@ AS t(LIKE transactions);
 COMMIT;
 SQL
 
-# Estatisticas
+# Estatisticas — se o user_migrado for 0, algo deu errado silenciosamente
+USER_COUNT=\$(docker exec \$DB_CONTAINER psql -U \$DB_USER -d \$DB_MAIN -tAc "SELECT COUNT(*) FROM users WHERE id = '\$LOCAL_USER_ID';")
+if [ "\$USER_COUNT" != "1" ]; then
+  echo "✗ Migracao falhou: usuario nao foi inserido no banco principal (esperava 1, achei \$USER_COUNT)."
+  docker exec \$DB_CONTAINER psql -U \$DB_USER -d postgres -c "DROP DATABASE IF EXISTS \$TEMP_DB;" >/dev/null
+  exit 1
+fi
+
 echo ""
 echo "→ Migracao completa. Contagem no banco principal (\$DB_MAIN):"
 docker exec \$DB_CONTAINER psql -U \$DB_USER -d \$DB_MAIN -c "
