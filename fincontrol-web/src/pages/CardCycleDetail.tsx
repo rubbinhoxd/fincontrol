@@ -95,12 +95,12 @@ export default function CardCycleDetail() {
                 <Stat label="Minha parte" value={formatCurrency(data.cycle.myShare)} share />
               )}
               <Stat label="% do limite" value={formatPercent(data.cycle.percentOfLimit)} />
-              <Stat label="% do salario" value={formatPercent(data.cycle.percentOfSalary)} />
+              <Stat label="% do salário" value={formatPercent(data.cycle.percentOfSalary)} />
               <Stat label="Limite" value={formatCurrency(data.cycle.creditLimit)} muted />
-              <Stat label="Transacoes" value={String(data.cycle.transactionCount)} muted />
+              <Stat label="Transações" value={String(data.cycle.transactionCount)} muted />
               {data.cycle.shared && (
                 <p className="text-[11px] text-gray-400 dark:text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-800">
-                  Cartao compartilhado — % do salario considera apenas a sua parte.
+                  Cartão compartilhado — % do salário considera apenas a sua parte.
                 </p>
               )}
             </div>
@@ -109,16 +109,16 @@ export default function CardCycleDetail() {
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="font-semibold dark:text-gray-100">Transacoes da fatura</h3>
+                <h3 className="font-semibold dark:text-gray-100">Transações da fatura</h3>
               </div>
               {data.transactions.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">Nenhuma transacao neste ciclo.</div>
+                <div className="text-center py-12 text-gray-400">Nenhuma transação neste ciclo.</div>
               ) : (
                 <table className="w-full">
                   <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
                     <tr>
                       <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Data</th>
-                      <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Descricao</th>
+                      <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Descrição</th>
                       <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Categoria</th>
                       <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
                     </tr>

@@ -99,7 +99,7 @@ export default function TransactionForm() {
         next.totalInstallments = null;
       }
       if (field === 'cardId') {
-        // Se o novo cartao nao for compartilhado, zera o flag
+        // Se o novo cartão nao for compartilhado, zera o flag
         const c = cards.find((cc) => cc.id === value) ?? null;
         if (!c || !c.shared) next.sharedWithPartner = false;
       }
@@ -127,7 +127,7 @@ export default function TransactionForm() {
   };
 
   return (
-    <PageContainer title={isEdit ? 'Editar transacao' : 'Nova transacao'}>
+    <PageContainer title={isEdit ? 'Editar transação' : 'Nova transação'}>
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 max-w-2xl space-y-5">
         {/* Type selector */}
         <div className="flex gap-2">
@@ -148,7 +148,7 @@ export default function TransactionForm() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Descricao">
+          <Field label="Descrição">
             <input
               type="text"
               value={form.description}
@@ -196,13 +196,13 @@ export default function TransactionForm() {
           </Field>
 
           {form.type === 'EXPENSE' && cards.length > 0 && (
-            <Field label="Cartao (opcional)">
+            <Field label="Cartão (opcional)">
               <select
                 value={form.cardId ?? ''}
                 onChange={(e) => update('cardId', e.target.value || null)}
                 className="input"
               >
-                <option value="">Sem cartao (PIX/debito/dinheiro)</option>
+                <option value="">Sem cartão (PIX/debito/dinheiro)</option>
                 {cards.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}{c.shared ? ' (compartilhado)' : ''}</option>
                 ))}
@@ -237,12 +237,12 @@ export default function TransactionForm() {
               </div>
             </div>
 
-            {/* Recorrencia — ativar em transacao existente */}
+            {/* Recorrência — ativar em transação existente */}
             {isEdit && canActivateRecurring && (
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recorrencia</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recorrência</p>
                 <Toggle
-                  label="Ativar recorrencia (cria copias para os proximos 12 meses)"
+                  label="Ativar recorrência (cria cópias para os próximos 12 meses)"
                   checked={form.activateRecurring}
                   onChange={(v) => update('activateRecurring', v)}
                 />
@@ -251,14 +251,14 @@ export default function TransactionForm() {
 
             {isExistingRecurring && (
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                <p className="text-sm text-primary font-medium">Esta transacao faz parte de um grupo recorrente.</p>
+                <p className="text-sm text-primary font-medium">Esta transação faz parte de um grupo recorrente.</p>
               </div>
             )}
 
             {/* Nota ao criar com recorrente */}
             {!isEdit && form.recurring && !form.installment && (
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                <p className="text-sm text-primary">Ao criar com "Recorrente" marcado, o sistema criara copias automaticas para os proximos 12 meses.</p>
+                <p className="text-sm text-primary">Ao criar com "Recorrente" marcado, o sistema criará cópias automaticas para os próximos 12 meses.</p>
               </div>
             )}
 
@@ -301,7 +301,7 @@ export default function TransactionForm() {
                 )}
 
                 {isExistingInstallment && (
-                  <p className="text-xs text-gray-400 mt-2">Campos de parcelamento nao podem ser alterados apos a criacao.</p>
+                  <p className="text-xs text-gray-400 mt-2">Campos de parcelamento nao podem ser alterados apos a criação.</p>
                 )}
               </div>
             )}

@@ -8,7 +8,7 @@ export function getCurrentYearMonth(): string {
 export function formatYearMonth(yearMonth: string): string {
   const [year, month] = yearMonth.split('-');
   const months = [
-    'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
   ];
   return `${months[parseInt(month) - 1]} ${year}`;
@@ -26,7 +26,7 @@ export function nextYearMonth(yearMonth: string): string {
   return `${year}-${String(month + 1).padStart(2, '0')}`;
 }
 
-const WEEKDAYS = ['Domingo', 'Segunda-feira', 'Terca-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sabado'];
+const WEEKDAYS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
 export function formatDate(date: string): string {
   const d = new Date(date + 'T00:00:00');

@@ -77,7 +77,7 @@ export default function Simulations() {
 
   return (
     <PageContainer
-      title="Simulacoes"
+      title="Simulações"
       action={
         <div className="flex items-center gap-3">
           <button onClick={() => setYearMonth(previousYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
@@ -92,15 +92,15 @@ export default function Simulations() {
     >
       <div className="flex items-center gap-2 p-3 mb-6 rounded-lg bg-primary/5 border border-primary/20 text-primary text-sm">
         <FlaskConical size={18} />
-        <span>Modo simulacao — nada e salvo. Adicione transacoes hipoteticas e veja o impacto no seu mes.</span>
+        <span>Modo simulação — nada é salvo. Adicione transações hipotéticas e veja o impacto no seu mês.</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Coluna esquerda: entrada da simulacao */}
+        {/* Coluna esquerda: entrada da simulação */}
         <div className="space-y-6">
-          {/* Salario simulado */}
+          {/* Salário simulado */}
           <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Salario simulado (opcional)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Salário simulado (opcional)</label>
             <input
               type="number"
               step="0.01"
@@ -108,13 +108,13 @@ export default function Simulations() {
               value={salaryOverride ?? ''}
               onChange={(e) => setSalaryOverride(e.target.value ? parseFloat(e.target.value) : null)}
               className="input"
-              placeholder={real ? `Real: ${formatCurrency(real.salary)}` : 'Salario de referencia'}
+              placeholder={real ? `Real: ${formatCurrency(real.salary)}` : 'Salário de referência'}
             />
           </div>
 
           {/* Adicionar item */}
           <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 space-y-4">
-            <h3 className="font-semibold dark:text-gray-100">Adicionar transacao hipotetica</h3>
+            <h3 className="font-semibold dark:text-gray-100">Adicionar transação hipotética</h3>
 
             <div className="flex gap-2">
               {(['EXPENSE', 'INCOME'] as TransactionType[]).map((t) => (
@@ -135,7 +135,7 @@ export default function Simulations() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descricao</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
                 <input type="text" value={draft.description} onChange={(e) => updateDraft('description', e.target.value)} className="input" maxLength={200} />
               </div>
               <div>
@@ -169,7 +169,7 @@ export default function Simulations() {
             )}
 
             <button onClick={addItem} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
-              <Plus size={16} /> Adicionar a simulacao
+              <Plus size={16} /> Adicionar a simulação
             </button>
           </div>
 
@@ -184,7 +184,7 @@ export default function Simulations() {
                       <span className={`font-medium ${item.type === 'INCOME' ? 'text-success' : 'text-danger'}`}>
                         {item.type === 'INCOME' ? '+' : '-'} {formatCurrency(item.amount)}
                       </span>
-                      <span className="text-gray-500 dark:text-gray-400">{item.description || 'Sem descricao'}</span>
+                      <span className="text-gray-500 dark:text-gray-400">{item.description || 'Sem descrição'}</span>
                     </div>
                     <button onClick={() => removeItem(i)} className="p-1 text-gray-400 hover:text-danger">
                       <Trash2 size={14} />
@@ -205,8 +205,8 @@ export default function Simulations() {
               <AlertCard simulated={simulated} />
               <CompareCard label="Total gasto" realValue={real.totalExpense} simValue={simulated.totalExpense} invert />
               <CompareCard label="Saldo" realValue={real.balance} simValue={simulated.balance} />
-              <CompareCard label="Disponivel no mes" realValue={real.availableToSpend} simValue={simulated.availableToSpend} />
-              <ComparePercentCard label="% do salario comprometido" realValue={real.salaryCommittedPercent} simValue={simulated.salaryCommittedPercent} />
+              <CompareCard label="Disponível no mês" realValue={real.availableToSpend} simValue={simulated.availableToSpend} />
+              <ComparePercentCard label="% do salário comprometido" realValue={real.salaryCommittedPercent} simValue={simulated.salaryCommittedPercent} />
               <CompareCard label="Media por dia restante" realValue={real.averagePerDayRemaining} simValue={simulated.averagePerDayRemaining} subtitle={`${simulated.daysRemainingInMonth} dias restantes`} />
             </>
           )}

@@ -36,7 +36,7 @@ export default function MonthlyReference() {
 
   return (
     <PageContainer
-      title="Referencia Mensal"
+      title="Referência Mensal"
       action={
         <div className="flex items-center gap-3">
           <button onClick={() => setYearMonth(previousYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
@@ -51,7 +51,7 @@ export default function MonthlyReference() {
     >
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 max-w-lg">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Configure o salario de referencia para <strong>{formatYearMonth(yearMonth)}</strong>.
+          Configure o salário de referência para <strong>{formatYearMonth(yearMonth)}</strong>.
           Este valor sera usado para calcular os indicadores do dashboard. Se nao configurado, herda o ultimo valor cadastrado.
         </p>
 
@@ -60,7 +60,7 @@ export default function MonthlyReference() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Salario (R$)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Salário (R$)</label>
               <input
                 type="number"
                 step="0.01"
@@ -79,7 +79,7 @@ export default function MonthlyReference() {
                 onChange={(e) => setNotes(e.target.value)}
                 className="input"
                 rows={2}
-                placeholder="Ex: Salario + vale alimentacao"
+                placeholder="Ex: Salário + vale alimentação"
               />
             </div>
 

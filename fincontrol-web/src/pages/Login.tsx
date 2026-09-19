@@ -38,8 +38,11 @@ export default function Login() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary">FinControl</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">Controle financeiro pessoal</p>
+          <div className="flex justify-center mb-3">
+            <img src="/favicon.png" alt="Savey" className="w-16 h-16 rounded-2xl shadow-md" />
+          </div>
+          <h1 className="text-3xl font-bold text-primary">Savey</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">smart money, simple control</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -72,7 +75,7 @@ export default function Login() {
         </form>
 
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-          {isRegister ? 'Ja tem conta?' : 'Nao tem conta?'}{' '}
+          {isRegister ? 'Já tem conta?' : 'Não tem conta?'}{' '}
           <button onClick={() => { setIsRegister(!isRegister); setError(''); }} className="text-primary font-medium hover:underline">
             {isRegister ? 'Entrar' : 'Criar conta'}
           </button>

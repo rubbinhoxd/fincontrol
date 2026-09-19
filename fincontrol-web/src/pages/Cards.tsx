@@ -58,7 +58,7 @@ export default function Cards() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja desativar este cartao? Transacoes existentes nao sao afetadas.')) return;
+    if (!confirm('Deseja desativar este cartão? Transações existentes nao sao afetadas.')) return;
     await deleteCard(id);
     load();
   };
@@ -77,20 +77,20 @@ export default function Cards() {
 
   return (
     <PageContainer
-      title="Cartoes"
+      title="Cartões"
       action={
         <button
           onClick={() => { resetForm(); setShowForm(true); }}
           className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
         >
           <Plus size={18} />
-          Novo cartao
+          Novo cartão
         </button>
       }
     >
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-5 mb-6">
-          <h3 className="font-semibold dark:text-gray-100 mb-4">{editId ? 'Editar cartao' : 'Novo cartao'}</h3>
+          <h3 className="font-semibold dark:text-gray-100 mb-4">{editId ? 'Editar cartão' : 'Novo cartão'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
@@ -99,7 +99,7 @@ export default function Cards() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de cartao</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de cartão</label>
                 <select value={form.brand ?? 'custom'} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="input">
                   {CARD_BRANDS.map((b) => (
                     <option key={b.id} value={b.id}>{b.label}</option>
@@ -132,8 +132,8 @@ export default function Cards() {
 
               <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
                 <input type="checkbox" checked={form.shared} onChange={(e) => setForm({ ...form, shared: e.target.checked })} className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
-                Cartao compartilhado com parceiro(a)
-                <span className="text-xs text-gray-400">— transacoes podem ser divididas 50/50</span>
+                Cartão compartilhado com parceiro(a)
+                <span className="text-xs text-gray-400">— transações podem ser divididas 50/50</span>
               </label>
 
               <div className="flex gap-3">
@@ -145,7 +145,7 @@ export default function Cards() {
             <div>
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</p>
               <CardVisual
-                name={form.name || 'Apelido do cartao'}
+                name={form.name || 'Apelido do cartão'}
                 brand={form.brand}
                 color={form.color}
                 creditLimit={form.creditLimit}
@@ -158,7 +158,7 @@ export default function Cards() {
       {loading ? (
         <div className="text-center py-12 text-gray-400">Carregando...</div>
       ) : cycles.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">Nenhum cartao cadastrado. Adicione o primeiro!</div>
+        <div className="text-center py-12 text-gray-400">Nenhum cartão cadastrado. Adicione o primeiro!</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {cycles.map((c) => (
@@ -207,7 +207,7 @@ function CardCycleItem({ cycle, onOpen, onEdit, onDelete }: {
             <p className="font-semibold dark:text-gray-100">{formatPercent(cycle.percentOfLimit)}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">% do salario</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">% do salário</p>
             <p className="font-semibold dark:text-gray-100">{formatPercent(cycle.percentOfSalary)}</p>
           </div>
           <div>
@@ -215,7 +215,7 @@ function CardCycleItem({ cycle, onOpen, onEdit, onDelete }: {
             <p className="font-semibold dark:text-gray-100">{cycle.daysUntilClosing} dia{cycle.daysUntilClosing === 1 ? '' : 's'}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Transacoes</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Transações</p>
             <p className="font-semibold dark:text-gray-100">{cycle.transactionCount}</p>
           </div>
         </div>

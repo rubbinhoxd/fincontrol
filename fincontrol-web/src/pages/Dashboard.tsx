@@ -79,7 +79,7 @@ export default function DashboardPage() {
 
   const currentDay = new Date().getDate();
   const daysInMonth = data ? currentDay + data.daysRemainingInMonth : 30;
-  // Ritmo ideal usa salario + receitas do mes (mesma base do "disponivel")
+  // Ritmo ideal usa salário + receitas do mes (mesma base do "disponivel")
   const effectiveIncome = data ? data.salary + data.totalIncome : 0;
   const idealPace = data ? Array.from({ length: daysInMonth }, (_, i) => +((effectiveIncome / daysInMonth) * (i + 1)).toFixed(2)) : [];
   const actualPace = data ? Array.from({ length: currentDay }, (_, i) => +((data.totalExpense / currentDay) * (i + 1)).toFixed(2)) : [];
@@ -114,7 +114,7 @@ export default function DashboardPage() {
       {loading ? (
         <div className="text-center py-12 text-gray-400">Carregando...</div>
       ) : !data ? (
-        <div className="text-center py-12 text-gray-400">Sem dados para este mes. Configure sua referencia mensal.</div>
+        <div className="text-center py-12 text-gray-400">Sem dados para este mês. Configure sua referência mensal.</div>
       ) : (
         <div className="space-y-6">
           {/* Alert banner */}
@@ -127,7 +127,7 @@ export default function DashboardPage() {
           {/* Salary progress bar */}
           <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
             <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-2">
-              <span>Consumo da renda{data.totalIncome > 0 ? ' (salario + receitas)' : ''}</span>
+              <span>Consumo da renda{data.totalIncome > 0 ? ' (salário + receitas)' : ''}</span>
               <span>{formatPercent(data.salaryCommittedPercent)}</span>
             </div>
             <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -143,7 +143,7 @@ export default function DashboardPage() {
 
           {/* Main cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card label="Salario" value={formatCurrency(data.salary)} />
+            <Card label="Salário" value={formatCurrency(data.salary)} />
             <Card label="Total recebido" value={formatCurrency(data.totalIncome)} color="text-success" />
             <Card label="Total gasto" value={formatCurrency(data.totalExpense)} color="text-danger" />
             <Card label="Saldo" value={formatCurrency(data.balance)} color={data.balance >= 0 ? 'text-success' : 'text-danger'} />
@@ -151,11 +151,11 @@ export default function DashboardPage() {
 
           {/* Control indicators */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card label="Disponivel no mes" value={formatCurrency(data.availableToSpend)} color={data.availableToSpend >= 0 ? 'text-primary' : 'text-danger'} />
+            <Card label="Disponível no mês" value={formatCurrency(data.availableToSpend)} color={data.availableToSpend >= 0 ? 'text-primary' : 'text-danger'} />
             <Card label="Media por dia restante" value={formatCurrency(data.averagePerDayRemaining)} subtitle={`${data.daysRemainingInMonth} dias restantes`} />
             <Card label="Comprometido com parcelas" value={formatCurrency(data.totalCommittedInstallments)} color="text-warning" />
             <Card
-              label="vs. mes anterior"
+              label="vs. mês anterior"
               value={`${data.previousMonthComparison.percentChange >= 0 ? '+' : ''}${formatPercent(data.previousMonthComparison.percentChange)}`}
               color={data.previousMonthComparison.difference <= 0 ? 'text-success' : 'text-danger'}
               subtitle={`Diferenca: ${formatCurrency(data.previousMonthComparison.difference)}`}
@@ -167,7 +167,7 @@ export default function DashboardPage() {
             {/* Pace chart */}
             {paceChartOption && (
               <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-                <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">Ritmo de gasto no mes</h3>
+                <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">Ritmo de gasto no mês</h3>
                 <ReactEChartsCore echarts={echarts} option={paceChartOption} style={{ height: 280 }} />
               </div>
             )}
@@ -196,7 +196,7 @@ export default function DashboardPage() {
               <BreakdownItem label="Fixos" value={data.expenseBreakdown.fixed} total={data.totalExpense} />
               <BreakdownItem label="Variaveis" value={data.expenseBreakdown.variable} total={data.totalExpense} />
               <BreakdownItem label="Assinaturas" value={data.expenseBreakdown.subscriptions} total={data.totalExpense} />
-              <BreakdownItem label="Nao planejados" value={data.expenseBreakdown.unplanned} total={data.totalExpense} />
+              <BreakdownItem label="Não planejados" value={data.expenseBreakdown.unplanned} total={data.totalExpense} />
               <BreakdownItem label="Impulso" value={data.expenseBreakdown.impulse} total={data.totalExpense} />
               <BreakdownItem label="Essenciais" value={data.expenseBreakdown.essential} total={data.totalExpense} />
               <BreakdownItem label="Superfluo" value={data.expenseBreakdown.nonEssential} total={data.totalExpense} />

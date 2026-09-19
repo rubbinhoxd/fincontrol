@@ -19,7 +19,7 @@ export default function CardVisual({ name, brand, color, creditLimit, totalSpent
 
   const textColor = template && template.id !== 'custom' ? template.textColor : '#ffffff';
   const accentColor = template && template.id !== 'custom' ? template.accentColor : '#ffffff';
-  const bank = template?.bank ?? 'Cartao';
+  const bank = template?.bank ?? 'Cartão';
 
   const dimensions = {
     sm: { height: 'h-32', name: 'text-sm', limit: 'text-xs', bank: 'text-[10px]' },

@@ -5,11 +5,11 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/transactions', label: 'Transacoes', icon: ArrowLeftRight },
-  { to: '/cards', label: 'Cartoes', icon: CreditCard },
-  { to: '/simulations', label: 'Simulacoes', icon: FlaskConical },
+  { to: '/transactions', label: 'Transações', icon: ArrowLeftRight },
+  { to: '/cards', label: 'Cartões', icon: CreditCard },
+  { to: '/simulations', label: 'Simulações', icon: FlaskConical },
   { to: '/categories', label: 'Categorias', icon: Tag },
-  { to: '/monthly-reference', label: 'Referencia Mensal', icon: Settings },
+  { to: '/monthly-reference', label: 'Referência Mensal', icon: Settings },
 ];
 
 export default function Sidebar() {
@@ -19,7 +19,7 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col min-h-screen">
       <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-        <h1 className="text-xl font-bold text-primary">FinControl</h1>
+        <h1 className="text-xl font-bold text-primary">Savey</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{userName}</p>
       </div>
 

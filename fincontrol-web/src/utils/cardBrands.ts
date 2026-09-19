@@ -1,4 +1,4 @@
-// Curated bank/card brand templates. Mostra o estilo visual do cartao real.
+// Curated bank/card brand templates. Mostra o estilo visual do cartão real.
 // "custom" e o fallback: usa apenas a cor escolhida pelo usuario.
 
 export interface CardBrandTemplate {

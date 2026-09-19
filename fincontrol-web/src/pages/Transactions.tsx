@@ -44,11 +44,11 @@ export default function Transactions() {
 
   const handleDelete = async (t: { id: string; installmentGroupId: string | null; recurringGroupId: string | null }) => {
     if (t.installmentGroupId) {
-      if (!confirm('Esta parcela e todas as parcelas futuras serao excluidas. Deseja continuar?')) return;
+      if (!confirm('Esta parcela e todas as parcelas futuras serão excluídas. Deseja continuar?')) return;
       await deleteTransaction(t.id, 'future');
     } else if (t.recurringGroupId) {
       const choice = prompt(
-        'Esta transacao e recorrente. Digite:\n1 - Excluir apenas este mes\n2 - Excluir este e todos os meses seguintes\n\nOu cancele para voltar.'
+        'Esta transação é recorrente. Digite:\n1 - Excluir apenas este mês\n2 - Excluir este e todos os meses seguintes\n\nOu cancele para voltar.'
       );
       if (!choice) return;
       if (choice === '2') {
@@ -57,7 +57,7 @@ export default function Transactions() {
         await deleteTransaction(t.id, 'single');
       }
     } else {
-      if (!confirm('Deseja excluir esta transacao?')) return;
+      if (!confirm('Deseja excluir esta transação?')) return;
       await deleteTransaction(t.id, 'single');
     }
     load();
@@ -97,14 +97,14 @@ export default function Transactions() {
 
   return (
     <PageContainer
-      title="Transacoes"
+      title="Transações"
       action={
         <button
           onClick={() => navigate('/transactions/new')}
           className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
         >
           <Plus size={18} />
-          Nova transacao
+          Nova transação
         </button>
       }
     >
@@ -177,7 +177,7 @@ export default function Transactions() {
             </div>
           )}
           <div className="bg-white dark:bg-gray-900 rounded-xl px-5 py-3 shadow-sm border border-gray-100 dark:border-gray-800">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Transacoes</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Transações</p>
             <p className="text-lg font-bold dark:text-gray-100">{totalCount}</p>
           </div>
         </div>
@@ -186,14 +186,14 @@ export default function Transactions() {
       {loading ? (
         <div className="text-center py-12 text-gray-400">Carregando...</div>
       ) : filteredTransactions.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">Nenhuma transacao encontrada.</div>
+        <div className="text-center py-12 text-gray-400">Nenhuma transação encontrada.</div>
       ) : (
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
               <tr>
                 <SortableHeader label="Data" column="date" align="left" sort={sort} onToggle={toggleSort} />
-                <SortableHeader label="Descricao" column="description" align="left" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="Descrição" column="description" align="left" sort={sort} onToggle={toggleSort} />
                 <SortableHeader label="Categoria" column="category" align="left" sort={sort} onToggle={toggleSort} />
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tipo</th>
                 <SortableHeader label="Valor" column="amount" align="right" sort={sort} onToggle={toggleSort} />
@@ -236,7 +236,7 @@ export default function Transactions() {
                         />
                       )}
                       {t.impulse && <Tag label="Impulso" color="bg-red-100 text-red-700" />}
-                      {!t.planned && !t.impulse && <Tag label="Nao planejado" color="bg-orange-100 text-orange-700" />}
+                      {!t.planned && !t.impulse && <Tag label="Não planejado" color="bg-orange-100 text-orange-700" />}
                       {t.fixed && <Tag label="Fixo" color="bg-blue-100 text-blue-700" />}
                       {t.subscription && <Tag label="Assinatura" color="bg-teal-100 text-teal-700" />}
                       {!t.essential && <Tag label="Superfluo" color="bg-purple-100 text-purple-700" />}
