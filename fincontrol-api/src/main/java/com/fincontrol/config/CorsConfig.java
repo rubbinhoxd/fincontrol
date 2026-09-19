@@ -14,7 +14,13 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         var config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        // AllowedOriginPatterns permite curinga com allowCredentials=true, ao contrario de AllowedOrigins.
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://177.7.33.241",
+                "https://savey.com.br",
+                "https://www.savey.com.br"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
