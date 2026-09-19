@@ -79,7 +79,9 @@ export default function DashboardPage() {
 
   const currentDay = new Date().getDate();
   const daysInMonth = data ? currentDay + data.daysRemainingInMonth : 30;
-  const idealPace = data ? Array.from({ length: daysInMonth }, (_, i) => +((data.salary / daysInMonth) * (i + 1)).toFixed(2)) : [];
+  // Ritmo ideal usa salario + receitas do mes (mesma base do "disponivel")
+  const effectiveIncome = data ? data.salary + data.totalIncome : 0;
+  const idealPace = data ? Array.from({ length: daysInMonth }, (_, i) => +((effectiveIncome / daysInMonth) * (i + 1)).toFixed(2)) : [];
   const actualPace = data ? Array.from({ length: currentDay }, (_, i) => +((data.totalExpense / currentDay) * (i + 1)).toFixed(2)) : [];
 
   const paceChartOption = data ? {
@@ -119,13 +121,13 @@ export default function DashboardPage() {
           <div className={`flex items-center gap-3 p-4 rounded-lg border ${alertColors[data.alertLevel]}`}>
             {data.alertLevel === 'GREEN' ? <TrendingDown size={20} /> : <AlertTriangle size={20} />}
             <span className="font-medium">{alertLabels[data.alertLevel]}</span>
-            <span>— {formatPercent(data.salaryCommittedPercent)} do salario comprometido</span>
+            <span>— {formatPercent(data.salaryCommittedPercent)} da renda comprometido</span>
           </div>
 
           {/* Salary progress bar */}
           <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
             <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-2">
-              <span>Consumo do salario</span>
+              <span>Consumo da renda{data.totalIncome > 0 ? ' (salario + receitas)' : ''}</span>
               <span>{formatPercent(data.salaryCommittedPercent)}</span>
             </div>
             <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">

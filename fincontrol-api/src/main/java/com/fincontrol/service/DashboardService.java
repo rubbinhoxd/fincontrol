@@ -38,12 +38,17 @@ public class DashboardService {
                 userId, TransactionType.EXPENSE, startDate, endDate);
         BigDecimal balance = totalIncome.subtract(totalExpense);
 
+        // Base pra "quanto sobra" e "% comprometido" = salario da referencia + receitas do mes.
+        // Receitas extras (bonus, presentes, freelas) somam ao poder de compra do mes sem
+        // mexer no salario de referencia — que continua sendo a base fixa mes a mes.
+        BigDecimal effectiveIncome = salary.add(totalIncome);
+
         BigDecimal salaryCommittedPercent = BigDecimal.ZERO;
-        BigDecimal availableToSpend = salary.subtract(totalExpense);
-        if (salary.compareTo(BigDecimal.ZERO) > 0) {
+        BigDecimal availableToSpend = effectiveIncome.subtract(totalExpense);
+        if (effectiveIncome.compareTo(BigDecimal.ZERO) > 0) {
             salaryCommittedPercent = totalExpense
                     .multiply(BigDecimal.valueOf(100))
-                    .divide(salary, 2, RoundingMode.HALF_UP);
+                    .divide(effectiveIncome, 2, RoundingMode.HALF_UP);
         }
 
         int daysRemaining = calculateDaysRemaining(ym);
@@ -163,12 +168,14 @@ public class DashboardService {
         BigDecimal totalExpense = base.getTotalExpense().add(deltaExpense);
         BigDecimal balance = totalIncome.subtract(totalExpense);
 
+        BigDecimal effectiveIncome = salary.add(totalIncome);
+
         BigDecimal salaryCommittedPercent = BigDecimal.ZERO;
-        BigDecimal availableToSpend = salary.subtract(totalExpense);
-        if (salary.compareTo(BigDecimal.ZERO) > 0) {
+        BigDecimal availableToSpend = effectiveIncome.subtract(totalExpense);
+        if (effectiveIncome.compareTo(BigDecimal.ZERO) > 0) {
             salaryCommittedPercent = totalExpense
                     .multiply(BigDecimal.valueOf(100))
-                    .divide(salary, 2, RoundingMode.HALF_UP);
+                    .divide(effectiveIncome, 2, RoundingMode.HALF_UP);
         }
 
         int daysRemaining = base.getDaysRemainingInMonth();
