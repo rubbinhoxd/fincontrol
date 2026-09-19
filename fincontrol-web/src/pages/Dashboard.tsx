@@ -11,6 +11,7 @@ import type { Dashboard as DashboardType } from '../types';
 import { formatCurrency, formatPercent } from '../utils/currency';
 import { getCurrentYearMonth, formatYearMonth, previousYearMonth, nextYearMonth } from '../utils/date';
 import { useTheme } from '../contexts/ThemeContext';
+import StartHereCard from '../components/onboarding/StartHereCard';
 
 echarts.use([BarChart, PieChart, LineChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer]);
 
@@ -117,6 +118,9 @@ export default function DashboardPage() {
         <div className="text-center py-12 text-gray-400">Sem dados para este mês. Configure sua referência mensal.</div>
       ) : (
         <div className="space-y-6">
+          {/* Onboarding: Comece por aqui — some quando renda + primeira transacao estao feitos, ou quando dispensado */}
+          <StartHereCard data={data} />
+
           {/* Alert banner */}
           <div className={`flex items-center gap-3 p-4 rounded-lg border ${alertColors[data.alertLevel]}`}>
             {data.alertLevel === 'GREEN' ? <TrendingDown size={20} /> : <AlertTriangle size={20} />}
