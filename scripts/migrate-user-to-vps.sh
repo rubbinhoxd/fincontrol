@@ -114,48 +114,34 @@ if [ "\$EXISTS" != "0" ]; then
   exit 1
 fi
 
-# Garante que dblink esteja instalado antes da transacao (nao pode falhar silenciosamente)
-docker exec \$DB_CONTAINER psql -U \$DB_USER -d \$DB_MAIN -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS dblink;"
-
 # Copia os dados: users -> categories -> cards -> monthly_references -> transactions
 # (nessa ordem por causa das FKs)
-# ON_ERROR_STOP=1 pra qualquer erro no INSERT fazer o script abortar em vez de fingir sucesso
+#
+# Estrategia: COPY (SELECT ... WHERE user_id) TO STDOUT no banco temp,
+# pipe pro COPY tabela FROM STDIN no banco principal. Nao precisa
+# enumerar colunas nem depender de extensoes — se o schema evoluir,
+# o COPY continua funcionando desde que as tabelas de origem e destino
+# tenham o mesmo shape (o que sempre e verdade porque so migramos
+# entre instancias na mesma versao).
 echo "→ Copiando dados do user pro banco principal..."
-docker exec -i \$DB_CONTAINER psql -U \$DB_USER -d \$DB_MAIN -v ON_ERROR_STOP=1 <<SQL
-BEGIN;
-
--- 1. user
-INSERT INTO users
-SELECT * FROM dblink('dbname=\$TEMP_DB',
-  'SELECT * FROM users WHERE id = ''\$LOCAL_USER_ID''')
-AS t(LIKE users);
-
--- 2. categories do user
-INSERT INTO categories
-SELECT * FROM dblink('dbname=\$TEMP_DB',
-  'SELECT * FROM categories WHERE user_id = ''\$LOCAL_USER_ID''')
-AS t(LIKE categories);
-
--- 3. cards do user
-INSERT INTO cards
-SELECT * FROM dblink('dbname=\$TEMP_DB',
-  'SELECT * FROM cards WHERE user_id = ''\$LOCAL_USER_ID''')
-AS t(LIKE cards);
-
--- 4. monthly_references do user
-INSERT INTO monthly_references
-SELECT * FROM dblink('dbname=\$TEMP_DB',
-  'SELECT * FROM monthly_references WHERE user_id = ''\$LOCAL_USER_ID''')
-AS t(LIKE monthly_references);
-
--- 5. transactions do user
-INSERT INTO transactions
-SELECT * FROM dblink('dbname=\$TEMP_DB',
-  'SELECT * FROM transactions WHERE user_id = ''\$LOCAL_USER_ID''')
-AS t(LIKE transactions);
-
-COMMIT;
-SQL
+for TABLE in users categories cards monthly_references transactions; do
+  if [ "\$TABLE" = "users" ]; then
+    FILTER="id = '\$LOCAL_USER_ID'"
+  else
+    FILTER="user_id = '\$LOCAL_USER_ID'"
+  fi
+  ROWS=\$(docker exec \$DB_CONTAINER psql -U \$DB_USER -d \$TEMP_DB -tAc "COPY (SELECT * FROM \$TABLE WHERE \$FILTER) TO STDOUT" \\
+    | docker exec -i \$DB_CONTAINER psql -U \$DB_USER -d \$DB_MAIN -v ON_ERROR_STOP=1 -c "COPY \$TABLE FROM STDIN" 2>&1)
+  # Output tipo "COPY 42" quando ok — extrai o numero
+  COUNT=\$(echo "\$ROWS" | grep -oE "COPY [0-9]+" | awk "{print \\\$2}" | head -1)
+  echo "  \$TABLE: \${COUNT:-0} linhas"
+  if [ -z "\$COUNT" ]; then
+    echo "✗ Erro copiando \$TABLE:"
+    echo "\$ROWS"
+    docker exec \$DB_CONTAINER psql -U \$DB_USER -d postgres -c "DROP DATABASE IF EXISTS \$TEMP_DB;" >/dev/null
+    exit 1
+  fi
+done
 
 # Estatisticas — se o user_migrado for 0, algo deu errado silenciosamente
 USER_COUNT=\$(docker exec \$DB_CONTAINER psql -U \$DB_USER -d \$DB_MAIN -tAc "SELECT COUNT(*) FROM users WHERE id = '\$LOCAL_USER_ID';")
