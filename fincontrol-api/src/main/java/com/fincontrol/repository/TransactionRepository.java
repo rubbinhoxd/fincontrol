@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
@@ -15,6 +17,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     // Expressao reutilizavel: minha parte = amount/2 se compartilhada, senao amount.
     // Aplicada em todas as agregacoes pessoais (dashboard, breakdown, comparativos).
     String MY_SHARE_SUM = "COALESCE(SUM(CASE WHEN t.sharedWithPartner = true THEN t.amount / 2 ELSE t.amount END), 0)";
+
+    /** Timestamp da criacao da transacao mais recente do usuario (independente da transactionDate). */
+    @Query("SELECT MAX(t.createdAt) FROM Transaction t WHERE t.user.id = :userId")
+    Optional<LocalDateTime> findLastTransactionCreatedAt(UUID userId);
 
     @Query("SELECT t FROM Transaction t JOIN FETCH t.category " +
            "WHERE t.user.id = :userId AND t.transactionDate BETWEEN :startDate AND :endDate " +

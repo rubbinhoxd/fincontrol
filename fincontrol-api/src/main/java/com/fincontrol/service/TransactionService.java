@@ -32,6 +32,7 @@ public class TransactionService {
     private final CategoryRepository categoryRepository;
     private final CardRepository cardRepository;
     private final UserRepository userRepository;
+    private final ReminderService reminderService;
 
     @Transactional(readOnly = true)
     public List<TransactionResponse> findByMonth(UUID userId, String yearMonth,
@@ -114,6 +115,9 @@ public class TransactionService {
             applyStandaloneInstallmentMetadata(transaction, request);
             transaction = transactionRepository.save(transaction);
         }
+
+        // Zera o contador de lembretes — usuario voltou a usar, sai do fluxo de inatividade
+        reminderService.resetReminderOnActivity(user);
 
         return toResponse(transaction);
     }

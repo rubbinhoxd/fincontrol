@@ -5,6 +5,7 @@ import Login from '../pages/Login';
 import VerifyEmail from '../pages/VerifyEmail';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
+import Unsubscribe from '../pages/Unsubscribe';
 import Dashboard from '../pages/Dashboard';
 import Transactions from '../pages/Transactions';
 import TransactionForm from '../pages/TransactionForm';
@@ -29,6 +30,7 @@ export default function AppRoutes() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/" /> : <ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route
           element={
             <PrivateRoute>
