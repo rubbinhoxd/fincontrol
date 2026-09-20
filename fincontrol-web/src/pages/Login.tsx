@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MailCheck } from 'lucide-react';
+import { MailCheck, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as authApi from '../api/auth';
 
@@ -19,6 +19,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<ViewState>({ kind: 'form' });
   const [resendMsg, setResendMsg] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -49,13 +51,24 @@ export default function Login() {
     }
   };
 
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
   const handleResend = async (targetEmail: string) => {
+    if (resendCooldown > 0 || resendLoading) return;
     setResendMsg('');
+    setResendLoading(true);
     try {
       await authApi.resendVerification(targetEmail);
-      setResendMsg('Email reenviado. Confira sua caixa de entrada e spam.');
+      setResendMsg('Email reenviado. Confira sua caixa de entrada e a pasta de spam / lixo eletrônico.');
+      setResendCooldown(30);
     } catch {
       setResendMsg('Não foi possível reenviar agora. Tente novamente em alguns minutos.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -122,7 +135,7 @@ export default function Login() {
             <h2 className="text-xl font-semibold dark:text-gray-100 mb-2">
               {view.kind === 'checkEmail' ? 'Confira seu email' : 'Email não verificado'}
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
               {view.kind === 'checkEmail'
                 ? 'Mandamos um link de confirmação pra '
                 : 'Precisamos confirmar '}
@@ -132,11 +145,24 @@ export default function Login() {
                 : ' antes de você entrar. Confira sua caixa de entrada.'}
             </p>
 
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
+              💡 Não achou? Olha também na pasta de <strong>spam</strong> ou <strong>lixo eletrônico</strong>.
+            </p>
+
             <button
               onClick={() => handleResend(view.email)}
-              className="w-full mb-3 border border-primary text-primary py-2.5 rounded-lg font-medium hover:bg-primary/5 transition-colors"
+              disabled={resendCooldown > 0 || resendLoading}
+              className="w-full mb-3 border border-primary text-primary py-2.5 rounded-lg font-medium hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
             >
-              Reenviar email
+              {resendLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" /> Enviando...
+                </>
+              ) : resendCooldown > 0 ? (
+                `Reenviar em ${resendCooldown}s`
+              ) : (
+                'Reenviar email'
+              )}
             </button>
 
             {resendMsg && <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{resendMsg}</p>}

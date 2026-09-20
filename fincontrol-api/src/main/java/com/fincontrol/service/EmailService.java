@@ -75,10 +75,10 @@ public class EmailService {
                         </tr>
                         <tr>
                           <td style="padding:40px;">
-                            <h2 style="margin:0 0 16px;color:#0F3D32;font-size:22px;">Ola%s! 👋</h2>
+                            <h2 style="margin:0 0 16px;color:#0F3D32;font-size:22px;">Olá%s! 👋</h2>
                             <p style="margin:0 0 24px;color:#374151;font-size:16px;line-height:1.6;">
-                              Obrigado por criar sua conta no <strong>Savey</strong>! Falta so um passo pra comecar
-                              a organizar suas financas: confirmar seu endereco de email.
+                              Obrigado por criar sua conta no <strong>Savey</strong>! Falta só um passo pra começar
+                              a organizar suas finanças: confirmar seu endereço de email.
                             </p>
                             <div style="text-align:center;margin:32px 0;">
                               <a href="%s" style="display:inline-block;background:#10B981;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">
@@ -90,7 +90,7 @@ public class EmailService {
                               <a href="%s" style="color:#10B981;word-break:break-all;">%s</a>
                             </p>
                             <p style="margin:32px 0 0;color:#9CA3AF;font-size:13px;line-height:1.5;">
-                              Esse link vai expirar em 24 horas. Se voce nao criou uma conta no Savey, pode ignorar esse email.
+                              Esse link vai expirar em 24 horas. Se você não criou uma conta no Savey, pode ignorar esse email.
                             </p>
                           </td>
                         </tr>
