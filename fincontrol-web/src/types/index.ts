@@ -1,9 +1,10 @@
 export type TransactionType = 'INCOME' | 'EXPENSE';
 
 export interface AuthResponse {
-  token: string;
+  token?: string;
   name: string;
   email: string;
+  emailVerified?: boolean;
 }
 
 export interface Category {

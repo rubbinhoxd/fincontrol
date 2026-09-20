@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { MailCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as authApi from '../api/auth';
+
+type ViewState =
+  | { kind: 'form' }
+  | { kind: 'checkEmail'; email: string }
+  | { kind: 'needsVerification'; email: string };
 
 export default function Login() {
   const [isRegister, setIsRegister] = useState(false);
@@ -11,6 +17,8 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [view, setView] = useState<ViewState>({ kind: 'form' });
+  const [resendMsg, setResendMsg] = useState('');
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -21,17 +29,39 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = isRegister
-        ? await authApi.register(name, email, password)
-        : await authApi.login(email, password);
-
-      login(response.data.token, response.data.name);
-      navigate('/');
+      if (isRegister) {
+        await authApi.register(name, email, password);
+        setView({ kind: 'checkEmail', email });
+      } else {
+        const response = await authApi.login(email, password);
+        login(response.data.token, response.data.name);
+        navigate('/');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao autenticar');
+      if (err.response?.status === 403 && err.response?.data?.error === 'EMAIL_NOT_VERIFIED') {
+        setView({ kind: 'needsVerification', email });
+      } else {
+        setError(err.response?.data?.message || 'Erro ao autenticar');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResend = async (targetEmail: string) => {
+    setResendMsg('');
+    try {
+      await authApi.resendVerification(targetEmail);
+      setResendMsg('Email reenviado. Confira sua caixa de entrada e spam.');
+    } catch {
+      setResendMsg('Não foi possível reenviar agora. Tente novamente em alguns minutos.');
+    }
+  };
+
+  const backToForm = () => {
+    setView({ kind: 'form' });
+    setError('');
+    setResendMsg('');
   };
 
   return (
@@ -45,41 +75,79 @@ export default function Login() {
           <p className="text-gray-500 dark:text-gray-400 mt-2">smart money, simple control</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isRegister && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input" required />
-            </div>
-          )}
+        {view.kind === 'form' && (
+          <>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {isRegister && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input" required />
+                </div>
+              )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" required />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" required />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required minLength={6} />
+              </div>
+
+              {error && <p className="text-sm text-danger">{error}</p>}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-primary text-white py-2.5 rounded-lg font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Carregando...' : isRegister ? 'Criar conta' : 'Entrar'}
+              </button>
+            </form>
+
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+              {isRegister ? 'Já tem conta?' : 'Não tem conta?'}{' '}
+              <button onClick={() => { setIsRegister(!isRegister); setError(''); }} className="text-primary font-medium hover:underline">
+                {isRegister ? 'Entrar' : 'Criar conta'}
+              </button>
+            </p>
+          </>
+        )}
+
+        {(view.kind === 'checkEmail' || view.kind === 'needsVerification') && (
+          <div className="text-center">
+            <MailCheck size={48} className="mx-auto text-primary mb-4" />
+            <h2 className="text-xl font-semibold dark:text-gray-100 mb-2">
+              {view.kind === 'checkEmail' ? 'Confira seu email' : 'Email não verificado'}
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              {view.kind === 'checkEmail'
+                ? 'Mandamos um link de confirmação pra '
+                : 'Precisamos confirmar '}
+              <strong className="dark:text-gray-300">{view.email}</strong>
+              {view.kind === 'checkEmail'
+                ? '. Abra o email e clica no botão pra ativar sua conta.'
+                : ' antes de você entrar. Confira sua caixa de entrada.'}
+            </p>
+
+            <button
+              onClick={() => handleResend(view.email)}
+              className="w-full mb-3 border border-primary text-primary py-2.5 rounded-lg font-medium hover:bg-primary/5 transition-colors"
+            >
+              Reenviar email
+            </button>
+
+            {resendMsg && <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{resendMsg}</p>}
+
+            <button
+              onClick={backToForm}
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary"
+            >
+              Voltar
+            </button>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required minLength={6} />
-          </div>
-
-          {error && <p className="text-sm text-danger">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary text-white py-2.5 rounded-lg font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Carregando...' : isRegister ? 'Criar conta' : 'Entrar'}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-          {isRegister ? 'Já tem conta?' : 'Não tem conta?'}{' '}
-          <button onClick={() => { setIsRegister(!isRegister); setError(''); }} className="text-primary font-medium hover:underline">
-            {isRegister ? 'Entrar' : 'Criar conta'}
-          </button>
-        </p>
+        )}
       </div>
     </div>
   );

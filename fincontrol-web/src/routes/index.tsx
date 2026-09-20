@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AppLayout from '../components/layout/AppLayout';
 import Login from '../pages/Login';
+import VerifyEmail from '../pages/VerifyEmail';
 import Dashboard from '../pages/Dashboard';
 import Transactions from '../pages/Transactions';
 import TransactionForm from '../pages/TransactionForm';
@@ -23,6 +24,7 @@ export default function AppRoutes() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           element={
             <PrivateRoute>

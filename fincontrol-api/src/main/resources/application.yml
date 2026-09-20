@@ -27,6 +27,10 @@ app:
   jwt:
     secret: f1nC0ntr0l-S3cr3t-K3y-Th4t-1s-L0ng-3n0ugh-F0r-HS256-Alg0r1thm-2026
     expiration-ms: 86400000 # 24 horas
+  resend:
+    api-key: ${RESEND_API_KEY:}
+    from: ${RESEND_FROM:Savey <no-reply@savey.com.br>}
+  frontend-url: ${FRONTEND_URL:https://savey.com.br}
 
 logging:
   level:
