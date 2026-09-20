@@ -1,10 +1,8 @@
 package com.fincontrol.service;
 
 import com.fincontrol.entity.BotSession;
-import com.fincontrol.entity.User;
 import com.fincontrol.enums.BotSessionStatus;
 import com.fincontrol.repository.BotSessionRepository;
-import com.fincontrol.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,7 +21,6 @@ import java.util.UUID;
 public class BotSessionService {
 
     private final BotSessionRepository botSessionRepository;
-    private final UserRepository userRepository;
     private final BotServiceClient botClient;
 
     /**
@@ -32,11 +29,8 @@ public class BotSessionService {
      */
     @Transactional
     public SessionSnapshot connect(UUID userId) {
-        User user = userRepository.getReferenceById(userId);
-
-        // Cria ou pega sessao existente
         BotSession session = botSessionRepository.findById(userId)
-                .orElseGet(() -> BotSession.builder().userId(userId).user(user).build());
+                .orElseGet(() -> BotSession.builder().userId(userId).build());
 
         session.setStatus(BotSessionStatus.WAITING_QR);
         session.setAllowedJid(null);

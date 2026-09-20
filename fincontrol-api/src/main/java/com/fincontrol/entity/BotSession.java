@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,16 +19,11 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BotSession {
+public class BotSession implements Persistable<UUID> {
 
     @Id
     @Column(name = "user_id")
     private UUID userId;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "user_id")
-    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -53,4 +49,20 @@ public class BotSession {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Override
+    public UUID getId() {
+        return userId;
+    }
+
+    /**
+     * Necessario porque userId e atribuido manualmente (nao gerado).
+     * Sem isso, Hibernate faz MERGE achando que a entidade e detached
+     * e quebra com StaleObjectStateException na primeira save.
+     */
+    @Override
+    @Transient
+    public boolean isNew() {
+        return createdAt == null;
+    }
 }
