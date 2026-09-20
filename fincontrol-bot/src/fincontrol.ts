@@ -12,36 +12,41 @@ interface Cache<T> {
   fetchedAt: number;
 }
 
+/**
+ * Cliente HTTP autenticado como um usuario especifico. Pega JWT via
+ * /api/internal/service-token (INTERNAL_SHARED_SECRET) — nao precisa
+ * de email/senha do usuario.
+ */
 export class FincontrolClient {
   private http: AxiosInstance;
   private jwt: string | null = null;
+  private jwtExpiresAt = 0;
   private categoriesCache: Cache<Category[]> = { value: null, fetchedAt: 0 };
   private cardsCache: Cache<Card[]> = { value: null, fetchedAt: 0 };
 
-  constructor() {
+  constructor(private readonly userId: string) {
     this.http = axios.create({
       baseURL: config.fincontrol.apiUrl,
       timeout: 15000,
     });
   }
 
-  /**
-   * Autentica com retry+backoff. Cobre o cenario onde o bot sobe antes da api
-   * estar pronta pra receber conexoes (comum no boot do docker compose).
-   */
-  async login(): Promise<void> {
-    const maxAttempts = 20;
+  /** Pega JWT pra esse user via endpoint interno da API. */
+  private async fetchJwt(): Promise<void> {
+    const maxAttempts = 10;
     let attempt = 0;
     while (true) {
       attempt++;
       try {
-        logger.info({ attempt }, 'Autenticando na fincontrol-api...');
-        const res = await this.http.post('/auth/login', {
-          email: config.fincontrol.email,
-          password: config.fincontrol.password,
-        });
+        const res = await this.http.post(
+          '/internal/service-token',
+          { userId: this.userId },
+          { headers: { 'X-Internal-Secret': config.fincontrol.internalSecret } }
+        );
         this.jwt = res.data.token;
-        logger.info({ userName: res.data.name }, 'Login OK');
+        // JWT vale 24h — assume 23h de margem
+        this.jwtExpiresAt = Date.now() + 23 * 60 * 60 * 1000;
+        logger.info({ userId: this.userId, email: res.data.email }, 'Service token obtido');
         return;
       } catch (err: any) {
         const isRetryable =
@@ -52,10 +57,16 @@ export class FincontrolClient {
         if (!isRetryable || attempt >= maxAttempts) {
           throw err;
         }
-        const delayMs = Math.min(1000 * Math.pow(1.5, attempt - 1), 10000); // backoff exponencial capado em 10s
-        logger.warn({ attempt, code: err?.code, delayMs }, 'Login falhou (retryable), aguardando antes do proximo retry');
+        const delayMs = Math.min(1000 * Math.pow(1.5, attempt - 1), 10000);
+        logger.warn({ attempt, code: err?.code, delayMs }, 'Fetch service-token falhou (retryable)');
         await new Promise((r) => setTimeout(r, delayMs));
       }
+    }
+  }
+
+  private async ensureAuth(): Promise<void> {
+    if (!this.jwt || Date.now() > this.jwtExpiresAt) {
+      await this.fetchJwt();
     }
   }
 
@@ -64,14 +75,15 @@ export class FincontrolClient {
     return { Authorization: `Bearer ${this.jwt}` };
   }
 
-  /** Executa uma requisicao autenticada. Se 401, tenta re-login uma vez. */
   private async withAuth<T>(fn: () => Promise<T>): Promise<T> {
+    await this.ensureAuth();
     try {
       return await fn();
     } catch (err) {
       if (err instanceof AxiosError && err.response?.status === 401) {
-        logger.warn('JWT expirado, re-autenticando...');
-        await this.login();
+        logger.warn({ userId: this.userId }, 'JWT expirado, re-buscando');
+        this.jwt = null;
+        await this.ensureAuth();
         return await fn();
       }
       throw err;
@@ -80,11 +92,7 @@ export class FincontrolClient {
 
   async listCategories(forceRefresh = false): Promise<Category[]> {
     const now = Date.now();
-    if (
-      !forceRefresh &&
-      this.categoriesCache.value &&
-      now - this.categoriesCache.fetchedAt < CACHE_TTL_MS
-    ) {
+    if (!forceRefresh && this.categoriesCache.value && now - this.categoriesCache.fetchedAt < CACHE_TTL_MS) {
       return this.categoriesCache.value;
     }
     const res = await this.withAuth(() =>
@@ -96,11 +104,7 @@ export class FincontrolClient {
 
   async listCards(forceRefresh = false): Promise<Card[]> {
     const now = Date.now();
-    if (
-      !forceRefresh &&
-      this.cardsCache.value &&
-      now - this.cardsCache.fetchedAt < CACHE_TTL_MS
-    ) {
+    if (!forceRefresh && this.cardsCache.value && now - this.cardsCache.fetchedAt < CACHE_TTL_MS) {
       return this.cardsCache.value;
     }
     const res = await this.withAuth(() =>
@@ -117,7 +121,6 @@ export class FincontrolClient {
     return res.data;
   }
 
-  /** Busca uma transacao especifica pelo id. */
   async getTransaction(id: string): Promise<TransactionResponse> {
     const res = await this.withAuth(() =>
       this.http.get<TransactionResponse>(`/transactions/${id}`, { headers: this.authHeader() })
@@ -125,7 +128,6 @@ export class FincontrolClient {
     return res.data;
   }
 
-  /** Atualiza (PUT). Sempre envia o payload completo. */
   async updateTransaction(id: string, payload: TransactionRequest): Promise<TransactionResponse> {
     const res = await this.withAuth(() =>
       this.http.put<TransactionResponse>(`/transactions/${id}`, payload, { headers: this.authHeader() })
@@ -142,10 +144,6 @@ export class FincontrolClient {
     );
   }
 
-  /**
-   * Lista as transacoes do mes atual (o mais recente que a API oferece via um filtro simples).
-   * Ordena por data DESC e retorna as primeiras N.
-   */
   async listRecentTransactions(limit = 15): Promise<TransactionResponse[]> {
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -155,8 +153,6 @@ export class FincontrolClient {
         params: { yearMonth },
       })
     );
-    // Ordena por data de CRIACAO (mais recente primeiro) para que "ultima"
-    // corresponda a "a que acabei de cadastrar" — o modelo mental do usuario.
     return res.data
       .slice()
       .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
