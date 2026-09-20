@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MailCheck, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as authApi from '../api/auth';
@@ -105,7 +105,14 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
+                <div className="flex items-baseline justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Senha</label>
+                  {!isRegister && (
+                    <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                      Esqueci minha senha
+                    </Link>
+                  )}
+                </div>
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required minLength={6} />
               </div>
 

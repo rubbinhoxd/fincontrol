@@ -51,4 +51,26 @@ public class AuthController {
         // Sempre 200 — nao vaza se o email existe ou nao
         return ResponseEntity.ok(Map.of("ok", true));
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "email obrigatorio"));
+        }
+        authService.forgotPassword(email);
+        // Sempre 200 — nao vaza se o email existe
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        String token = body.get("token");
+        String newPassword = body.get("newPassword");
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "token obrigatorio"));
+        }
+        authService.resetPassword(token, newPassword);
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
 }

@@ -33,7 +33,7 @@ public class AuthService {
             throw new IllegalArgumentException("Email already registered");
         }
 
-        String token = generateVerificationToken();
+        String token = generateToken();
 
         User user = User.builder()
                 .name(request.getName())
@@ -104,7 +104,7 @@ public class AuthService {
             return;
         }
 
-        String token = generateVerificationToken();
+        String token = generateToken();
         user.setVerificationToken(token);
         user.setVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
         userRepository.save(user);
@@ -112,7 +112,47 @@ public class AuthService {
         emailService.sendVerificationEmail(user.getEmail(), user.getName(), token);
     }
 
-    private String generateVerificationToken() {
+    @Transactional
+    public void forgotPassword(String email) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        // Sempre retorna 200 — nao vaza se o email existe.
+        if (user == null) {
+            return;
+        }
+
+        String token = generateToken();
+        user.setPasswordResetToken(token);
+        user.setPasswordResetExpiresAt(LocalDateTime.now().plusHours(1));
+        userRepository.save(user);
+
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getName(), token);
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new IllegalArgumentException("Senha precisa ter no minimo 6 caracteres.");
+        }
+
+        User user = userRepository.findByPasswordResetToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Token invalido ou ja utilizado."));
+
+        if (user.getPasswordResetExpiresAt() != null
+                && user.getPasswordResetExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Link expirado. Solicite um novo email de redefinicao.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetExpiresAt(null);
+        // Se o email nao estava verificado, aproveita e verifica agora (o usuario provou que tem acesso ao email).
+        if (!user.isEmailVerified()) {
+            user.setEmailVerified(true);
+        }
+        userRepository.save(user);
+    }
+
+    private String generateToken() {
         byte[] bytes = new byte[32];
         RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);

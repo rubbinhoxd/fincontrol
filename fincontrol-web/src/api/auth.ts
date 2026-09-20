@@ -12,3 +12,9 @@ export const verifyEmail = (token: string) =>
 
 export const resendVerification = (email: string) =>
   client.post<{ ok: boolean }>('/auth/resend-verification', { email });
+
+export const forgotPassword = (email: string) =>
+  client.post<{ ok: boolean }>('/auth/forgot-password', { email });
+
+export const resetPassword = (token: string, newPassword: string) =>
+  client.post<{ ok: boolean }>('/auth/reset-password', { token, newPassword });
