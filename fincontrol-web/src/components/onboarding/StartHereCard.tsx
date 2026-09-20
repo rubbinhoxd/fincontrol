@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Circle, ChevronRight, X, Rocket } from 'lucide-react';
 import { listCards } from '../../api/cards';
+import { getWhatsAppStatus } from '../../api/whatsapp';
 import type { Dashboard as DashboardType } from '../../types';
 
 const DISMISSED_KEY = 'savey:startHereDismissed';
@@ -18,12 +19,16 @@ export default function StartHereCard({ data }: { data: DashboardType }) {
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState<boolean>(() => localStorage.getItem(DISMISSED_KEY) === '1');
   const [hasCard, setHasCard] = useState<boolean | null>(null);
+  const [hasWhatsApp, setHasWhatsApp] = useState<boolean | null>(null);
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     listCards()
       .then((res) => setHasCard(res.data.length > 0))
       .catch(() => setHasCard(false));
+    getWhatsAppStatus()
+      .then((res) => setHasWhatsApp(res.data.status === 'ACTIVE'))
+      .catch(() => setHasWhatsApp(false));
   }, []);
 
   const hasSalary = data.salary > 0;
@@ -34,6 +39,7 @@ export default function StartHereCard({ data }: { data: DashboardType }) {
     { key: 'salary', label: 'Configurar renda mensal', done: hasSalary, href: '/monthly-reference' },
     { key: 'transaction', label: 'Adicionar primeira transação', done: hasTransaction, href: '/transactions/new' },
     { key: 'card', label: 'Cadastrar um cartão', done: hasCard === true, href: '/cards', optional: true },
+    { key: 'whatsapp', label: 'Conectar WhatsApp', done: hasWhatsApp === true, href: '/whatsapp', optional: true },
   ];
 
   const essentialDone = hasSalary && hasTransaction;

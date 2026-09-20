@@ -14,6 +14,7 @@ import Cards from '../pages/Cards';
 import CardCycleDetail from '../pages/CardCycleDetail';
 import Categories from '../pages/Categories';
 import MonthlyReference from '../pages/MonthlyReference';
+import WhatsApp from '../pages/WhatsApp';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -47,6 +48,7 @@ export default function AppRoutes() {
           <Route path="/cards/:id" element={<CardCycleDetail />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/monthly-reference" element={<MonthlyReference />} />
+          <Route path="/whatsapp" element={<WhatsApp />} />
         </Route>
       </Routes>
     </BrowserRouter>

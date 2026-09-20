@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ArrowLeftRight, Tag, Settings, LogOut, Moon, Sun, FlaskConical, CreditCard } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Tag, Settings, LogOut, Moon, Sun, FlaskConical, CreditCard, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -7,6 +7,7 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/transactions', label: 'Transações', icon: ArrowLeftRight },
   { to: '/cards', label: 'Cartões', icon: CreditCard },
+  { to: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
   { to: '/simulations', label: 'Simulações', icon: FlaskConical },
   { to: '/categories', label: 'Categorias', icon: Tag },
   { to: '/monthly-reference', label: 'Referência Mensal', icon: Settings },
