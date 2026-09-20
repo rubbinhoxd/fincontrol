@@ -34,6 +34,7 @@ export default function Login() {
         setView({ kind: 'checkEmail', email });
       } else {
         const response = await authApi.login(email, password);
+        if (!response.data.token) throw new Error('Token ausente na resposta.');
         login(response.data.token, response.data.name);
         navigate('/');
       }
