@@ -31,6 +31,9 @@ app:
     api-key: ${RESEND_API_KEY:}
     from: ${RESEND_FROM:Savey <no-reply@savey.com.br>}
   frontend-url: ${FRONTEND_URL:https://savey.com.br}
+  bot:
+    url: ${BOT_URL:http://bot:3000}
+    internal-secret: ${INTERNAL_SHARED_SECRET:}
 
 logging:
   level:
