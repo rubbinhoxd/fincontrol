@@ -67,11 +67,26 @@ if [ -z "$PASSWORD" ]; then
   exit 1
 fi
 
-read -sp "ANTHROPIC_API_KEY (sk-ant-...): " ANTHROPIC_KEY
-echo
+# A chave da Anthropic e compartilhada entre todos os bots. Se ja existe pelo
+# menos um bot no VPS, reaproveita a chave dele em vez de pedir de novo.
+# Voce ainda pode forcar uma chave especifica passando ANTHROPIC_API_KEY=... antes do comando.
+if [ -z "$ANTHROPIC_API_KEY" ]; then
+  ANTHROPIC_KEY="$(ssh -o BatchMode=yes "$VPS_USER@$VPS_HOST" \
+    "grep -h '^ANTHROPIC_API_KEY=' /root/fincontrol/bots/*.env 2>/dev/null | head -1 | cut -d= -f2-")"
+else
+  ANTHROPIC_KEY="$ANTHROPIC_API_KEY"
+fi
+
 if [ -z "$ANTHROPIC_KEY" ]; then
-  echo "✗ Chave vazia. Abortando."
-  exit 1
+  echo "(nenhum bot pre-existente pra reaproveitar a chave)"
+  read -sp "ANTHROPIC_API_KEY (sk-ant-...): " ANTHROPIC_KEY
+  echo
+  if [ -z "$ANTHROPIC_KEY" ]; then
+    echo "✗ Chave vazia. Abortando."
+    exit 1
+  fi
+else
+  echo "→ ANTHROPIC_API_KEY reaproveitada de outro bot ja provisionado"
 fi
 
 echo ""
