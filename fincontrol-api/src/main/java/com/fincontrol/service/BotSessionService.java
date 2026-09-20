@@ -70,6 +70,10 @@ public class BotSessionService {
             session.setGroupName(state.getGroupName());
             session.setConnectedAt(LocalDateTime.now());
             changed = true;
+        } else if (state.getGroupName() != null && !state.getGroupName().equals(session.getGroupName())) {
+            // JID ja salvo mas group_name mudou/estava vazio — atualiza sozinho
+            session.setGroupName(state.getGroupName());
+            changed = true;
         }
         if (changed) {
             botSessionRepository.save(session);

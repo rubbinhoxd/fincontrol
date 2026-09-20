@@ -1,7 +1,7 @@
 package com.fincontrol.service;
 
 import com.fincontrol.enums.BotSessionStatus;
-import lombok.Getter;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,8 +75,12 @@ public class BotServiceClient {
         }
     }
 
-    /** DTO refletindo o que o bot devolve. QR e null exceto quando status == WAITING_QR. */
-    @Getter
+    /**
+     * DTO refletindo o que o bot devolve. QR e null exceto quando status == WAITING_QR.
+     * @Data pro Jackson conseguir setar via setters (sem setter ele nao desserializa
+     * corretamente e alguns campos ficam null).
+     */
+    @Data
     public static class BotSessionState {
         private BotSessionStatus status;
         private String qr;
