@@ -4,7 +4,7 @@ import makeWASocket, {
   useMultiFileAuthState,
   WASocket,
 } from '@whiskeysockets/baileys';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import pino from 'pino';
@@ -48,8 +48,40 @@ export class Session {
 
   constructor(userId: string, allowedJid: string | null) {
     this.userId = userId;
-    this.allowedJid = allowedJid;
     this.fincontrol = new FincontrolClient(userId);
+    // Se ha meta persistido em disco, recupera. Caso contrario usa o valor passado.
+    const meta = this.loadMeta();
+    if (meta) {
+      this.allowedJid = meta.allowedJid;
+      this.groupName = meta.groupName;
+    } else {
+      this.allowedJid = allowedJid;
+    }
+  }
+
+  private metaFile(): string {
+    return join(this.authDir(), 'session-meta.json');
+  }
+
+  private loadMeta(): { allowedJid: string | null; groupName: string | null } | null {
+    try {
+      if (!existsSync(this.metaFile())) return null;
+      return JSON.parse(readFileSync(this.metaFile(), 'utf8'));
+    } catch {
+      return null;
+    }
+  }
+
+  private saveMeta(): void {
+    try {
+      mkdirSync(this.authDir(), { recursive: true });
+      writeFileSync(
+        this.metaFile(),
+        JSON.stringify({ allowedJid: this.allowedJid, groupName: this.groupName })
+      );
+    } catch (err) {
+      logger.warn({ err, userId: this.userId }, 'Falha ao persistir session-meta');
+    }
   }
 
   getStatus() {
@@ -169,6 +201,7 @@ export class Session {
             }
             this.status = 'ACTIVE';
             this.detectionDeadline = null;
+            this.saveMeta();
             logger.info({ userId: this.userId, jid, groupName: this.groupName }, 'JID capturado');
             // Nao processa essa msg como comando — foi so a msg de ativacao
             continue;
@@ -242,6 +275,8 @@ export class Session {
     this.groupName = null;
     this.status = 'PENDING_GROUP';
     this.detectionDeadline = new Date(Date.now() + GROUP_DETECTION_MINUTES * 60_000);
+    // Se tinha meta antigo, apaga (senao reboot recuperaria JID errado)
+    try { if (existsSync(this.metaFile())) require('node:fs').unlinkSync(this.metaFile()); } catch {}
     logger.info({ userId: this.userId }, 'Deteccao de grupo reiniciada');
   }
 
