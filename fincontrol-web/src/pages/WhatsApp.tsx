@@ -84,6 +84,22 @@ export default function WhatsApp() {
     }
   };
 
+  /** Reconectar do zero: apaga a sessao atual e ja inicia uma nova (novo QR). */
+  const handleReset = async () => {
+    if (!confirm('Isso apaga a sessão atual e gera um QR novo. Você precisará escanear de novo. Continuar?')) return;
+    setError('');
+    setConnecting(true);
+    try {
+      await disconnectWhatsApp();
+      const res = await connectWhatsApp();
+      setSnapshot(res.data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao reconectar.');
+    } finally {
+      setConnecting(false);
+    }
+  };
+
   const copyMessage = async () => {
     try {
       await navigator.clipboard.writeText(SUGGESTED_MSG);
@@ -115,15 +131,15 @@ export default function WhatsApp() {
           )}
 
           {snapshot?.status === 'PENDING_GROUP' && (
-            <PendingGroupView onCopyMsg={copyMessage} copiedMsg={copiedMsg} />
+            <PendingGroupView onCopyMsg={copyMessage} copiedMsg={copiedMsg} onReset={handleReset} />
           )}
 
           {snapshot?.status === 'GROUP_TIMEOUT' && (
-            <GroupTimeoutView onRestart={handleRestartDetection} />
+            <GroupTimeoutView onRestart={handleRestartDetection} onReset={handleReset} />
           )}
 
           {snapshot?.status === 'ACTIVE' && (
-            <ActiveView snapshot={snapshot} onDisconnect={handleDisconnect} />
+            <ActiveView snapshot={snapshot} onDisconnect={handleDisconnect} onReset={handleReset} />
           )}
         </div>
       )}
@@ -197,7 +213,7 @@ function WaitingQrView({ qr, onCancel }: { qr: string | null; onCancel: () => vo
   );
 }
 
-function PendingGroupView({ onCopyMsg, copiedMsg }: { onCopyMsg: () => void; copiedMsg: boolean }) {
+function PendingGroupView({ onCopyMsg, copiedMsg, onReset }: { onCopyMsg: () => void; copiedMsg: boolean; onReset: () => void }) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-sm border border-primary/30">
       <div className="flex items-center gap-3 mb-4">
@@ -238,15 +254,24 @@ function PendingGroupView({ onCopyMsg, copiedMsg }: { onCopyMsg: () => void; cop
         </div>
       </div>
 
-      <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-2">
+      <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-2 mb-4">
         <Loader2 size={12} className="animate-spin" />
         Aguardando você mandar a primeira mensagem... (janela de 10 min)
+      </div>
+
+      <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+        <button
+          onClick={onReset}
+          className="text-xs text-gray-500 dark:text-gray-400 hover:text-danger"
+        >
+          Travou? Reconectar do zero (novo QR)
+        </button>
       </div>
     </div>
   );
 }
 
-function GroupTimeoutView({ onRestart }: { onRestart: () => void }) {
+function GroupTimeoutView({ onRestart, onReset }: { onRestart: () => void; onReset: () => void }) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-sm border border-warning/30">
       <div className="flex items-center gap-3 mb-4">
@@ -261,15 +286,21 @@ function GroupTimeoutView({ onRestart }: { onRestart: () => void }) {
 
       <button
         onClick={onRestart}
-        className="bg-primary text-white px-6 py-2.5 rounded-lg font-medium hover:bg-primary-dark transition-colors inline-flex items-center gap-2"
+        className="bg-primary text-white px-6 py-2.5 rounded-lg font-medium hover:bg-primary-dark transition-colors inline-flex items-center gap-2 mb-4"
       >
         <RefreshCw size={16} /> Reiniciar detecção
       </button>
+
+      <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+        <button onClick={onReset} className="text-xs text-gray-500 dark:text-gray-400 hover:text-danger">
+          Ou reconectar do zero (novo QR)
+        </button>
+      </div>
     </div>
   );
 }
 
-function ActiveView({ snapshot, onDisconnect }: { snapshot: BotSessionSnapshot; onDisconnect: () => void }) {
+function ActiveView({ snapshot, onDisconnect, onReset }: { snapshot: BotSessionSnapshot; onDisconnect: () => void; onReset: () => void }) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-sm border border-success/30">
       <div className="flex items-center gap-3 mb-4">
@@ -288,11 +319,11 @@ function ActiveView({ snapshot, onDisconnect }: { snapshot: BotSessionSnapshot; 
         </p>
       </div>
 
-      <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
-        <button
-          onClick={onDisconnect}
-          className="text-danger hover:underline text-sm font-medium"
-        >
+      <div className="border-t border-gray-100 dark:border-gray-800 pt-4 flex flex-col gap-2">
+        <button onClick={onReset} className="text-xs text-gray-500 dark:text-gray-400 hover:text-primary text-left">
+          Travou? Reconectar do zero (novo QR)
+        </button>
+        <button onClick={onDisconnect} className="text-danger hover:underline text-sm font-medium text-left">
           Desconectar WhatsApp
         </button>
       </div>
