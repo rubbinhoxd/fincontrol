@@ -8,8 +8,8 @@ import { getWhatsAppStatus } from '../../api/whatsapp';
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/transactions', label: 'Transações', icon: ArrowLeftRight },
-  { to: '/cards', label: 'Cartões', icon: CreditCard },
   { to: '/whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle, badge: 'novo' },
+  { to: '/cards', label: 'Cartões', icon: CreditCard },
   { to: '/simulations', label: 'Simulações', icon: FlaskConical },
   { to: '/categories', label: 'Categorias', icon: Tag },
   { to: '/monthly-reference', label: 'Referência Mensal', icon: Settings },
