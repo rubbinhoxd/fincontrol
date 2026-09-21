@@ -1,13 +1,15 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, ArrowLeftRight, Tag, Settings, LogOut, Moon, Sun, FlaskConical, CreditCard, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { getWhatsAppStatus } from '../../api/whatsapp';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/transactions', label: 'Transações', icon: ArrowLeftRight },
   { to: '/cards', label: 'Cartões', icon: CreditCard },
-  { to: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
+  { to: '/whatsapp', label: 'Assistente WhatsApp', icon: MessageCircle, badge: 'novo' },
   { to: '/simulations', label: 'Simulações', icon: FlaskConical },
   { to: '/categories', label: 'Categorias', icon: Tag },
   { to: '/monthly-reference', label: 'Referência Mensal', icon: Settings },
@@ -16,6 +18,13 @@ const navItems = [
 export default function Sidebar() {
   const { userName, logout } = useAuth();
   const { dark, toggle } = useTheme();
+  const [whatsAppActive, setWhatsAppActive] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getWhatsAppStatus()
+      .then((res) => setWhatsAppActive(res.data.status === 'ACTIVE'))
+      .catch(() => setWhatsAppActive(false));
+  }, []);
 
   return (
     <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col min-h-screen">
@@ -25,22 +34,31 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1">
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`
-            }
-          >
-            <Icon size={18} />
-            {label}
-          </NavLink>
-        ))}
+        {navItems.map(({ to, label, icon: Icon, badge }) => {
+          // Badge "novo" so aparece no assistente WhatsApp enquanto nao ativou
+          const showBadge = badge === 'novo' && whatsAppActive === false;
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`
+              }
+            >
+              <Icon size={18} />
+              <span className="flex-1">{label}</span>
+              {showBadge && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary text-white uppercase tracking-wide">
+                  Novo
+                </span>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
       <div className="p-4 border-t border-gray-200 dark:border-gray-800 space-y-1">

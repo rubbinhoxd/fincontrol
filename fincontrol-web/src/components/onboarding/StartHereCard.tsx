@@ -39,7 +39,7 @@ export default function StartHereCard({ data }: { data: DashboardType }) {
     { key: 'salary', label: 'Configurar renda mensal', done: hasSalary, href: '/monthly-reference' },
     { key: 'transaction', label: 'Adicionar primeira transação', done: hasTransaction, href: '/transactions/new' },
     { key: 'card', label: 'Cadastrar um cartão', done: hasCard === true, href: '/cards', optional: true },
-    { key: 'whatsapp', label: 'Conectar WhatsApp', done: hasWhatsApp === true, href: '/whatsapp', optional: true },
+    { key: 'whatsapp', label: 'Ativar assistente WhatsApp', done: hasWhatsApp === true, href: '/whatsapp', optional: true },
   ];
 
   const essentialDone = hasSalary && hasTransaction;
