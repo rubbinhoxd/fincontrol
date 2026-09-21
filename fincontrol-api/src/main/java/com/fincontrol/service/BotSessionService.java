@@ -65,7 +65,14 @@ public class BotSessionService {
             session.setStatus(state.getStatus());
             changed = true;
         }
-        if (state.getAllowedJid() != null && !state.getAllowedJid().equals(session.getAllowedJid())) {
+        // Bot voltou pra DISCONNECTED (loggedOut, wipe, etc) — limpa dados de conexao
+        if (state.getStatus() == BotSessionStatus.DISCONNECTED
+                && (session.getAllowedJid() != null || session.getGroupName() != null || session.getConnectedAt() != null)) {
+            session.setAllowedJid(null);
+            session.setGroupName(null);
+            session.setConnectedAt(null);
+            changed = true;
+        } else if (state.getAllowedJid() != null && !state.getAllowedJid().equals(session.getAllowedJid())) {
             session.setAllowedJid(state.getAllowedJid());
             session.setGroupName(state.getGroupName());
             session.setConnectedAt(LocalDateTime.now());

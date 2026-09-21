@@ -126,7 +126,12 @@ export class Session {
           // Reconecta com backoff simples (2s)
           setTimeout(() => this.start().catch((e) => logger.error({ err: e, userId: this.userId }, 'Reconnect falhou')), 2000);
         } else {
+          // loggedOut ou auth invalida — apaga o auth_info pra proximo start pedir QR novo.
+          // Senao a sessao entra em loop de reconexao com creds ja invalidas.
           this.status = 'DISCONNECTED';
+          this.allowedJid = null;
+          this.groupName = null;
+          this.wipe().catch((e) => logger.error({ err: e, userId: this.userId }, 'Wipe apos loggedOut falhou'));
         }
       }
     });
