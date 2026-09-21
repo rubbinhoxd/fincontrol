@@ -1,6 +1,6 @@
 import pino from 'pino';
 import { config } from '../config.js';
-import { interpret, interpretFatura } from '../llm.js';
+import { interpret, interpretFatura, FaturaImage } from '../llm.js';
 import { buildFaturaPrompt, buildSystemPrompt } from '../prompt.js';
 import {
   LlmResponse,
@@ -16,6 +16,30 @@ const logger = pino({ level: config.logLevel }).child({ mod: 'msg' });
 const PENDING_TTL_MS = 10 * 60 * 1000;
 const CONFIRM_REGEX = /^(sim|confirma|confirmar|ok|okay|vai|vamos|importa|beleza|isso)$/i;
 const CANCEL_REGEX = /^(nao|não|cancela|cancelar|descarta|descartar)$/i;
+
+/**
+ * Janela de debounce pra agrupar imagens que chegam em rajada.
+ * O usuario pode mandar 5-10 prints em segundos; a gente espera esse tempo
+ * apos cada imagem e so processa quando parar de chegar imagem nova.
+ */
+const IMAGE_BATCH_DEBOUNCE_MS = 8000;
+
+export interface FaturaBatch {
+  images: FaturaImage[];
+  captions: string[]; // captions individuais das msgs
+  timer: NodeJS.Timeout;
+  createdAt: number;
+}
+
+export interface PendingDuplicateItem {
+  request: TransactionRequest;
+  existing: TransactionResponse;
+}
+
+export interface PendingDuplicates {
+  items: PendingDuplicateItem[];
+  createdAt: number;
+}
 
 interface IncomingMessage {
   jid: string;
@@ -37,8 +61,27 @@ export async function handleMessage(session: Session, msg: IncomingMessage): Pro
   logger.info({ userId: session.userId, hasImage: !!msg.imageBuffer, text: msg.text.substring(0, 40) }, 'msg');
 
   if (msg.imageBuffer) {
-    await handleImage(session, msg);
+    enqueueImageForBatch(session, msg);
     return;
+  }
+
+  // Pendencia de duplicata tem prioridade sobre import (mais recente e mais especifica)
+  const pendingDup = session.pendingDuplicates.get(msg.jid);
+  if (pendingDup) {
+    const age = Date.now() - pendingDup.createdAt;
+    if (age > PENDING_TTL_MS) {
+      session.pendingDuplicates.delete(msg.jid);
+    } else if (CONFIRM_REGEX.test(msg.text.trim())) {
+      session.pendingDuplicates.delete(msg.jid);
+      await forceCreateDuplicates(session, pendingDup, msg.jid);
+      return;
+    } else if (CANCEL_REGEX.test(msg.text.trim())) {
+      session.pendingDuplicates.delete(msg.jid);
+      await session.reply(msg.jid, '✗ Não criei nenhuma das transações duplicadas.');
+      return;
+    } else {
+      session.pendingDuplicates.delete(msg.jid);
+    }
   }
 
   const pending = session.pendingImports.get(msg.jid);
@@ -62,28 +105,85 @@ export async function handleMessage(session: Session, msg: IncomingMessage): Pro
   await handleText(session, msg);
 }
 
-async function handleImage(session: Session, msg: IncomingMessage): Promise<void> {
+async function forceCreateDuplicates(session: Session, pending: PendingDuplicates, jid: string): Promise<void> {
+  const results: CreationResult[] = [];
+  for (const item of pending.items) {
+    try {
+      const created = await session.fincontrol.createTransaction(item.request, true);
+      results.push({ ok: true, payload: item.request, created });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? 'erro desconhecido';
+      results.push({ ok: false, payload: item.request, error: String(msg) });
+    }
+  }
+  await session.reply(jid, buildCreateSummary(results));
+}
+
+/**
+ * Ao receber imagem, adiciona ao batch em andamento (ou cria um novo) e
+ * agenda o processamento pra IMAGE_BATCH_DEBOUNCE_MS depois. Se chegar
+ * outra imagem antes desse tempo, o timer e resetado e ela entra no batch.
+ * So processa quando o usuario parar de mandar imagem por 8s.
+ */
+function enqueueImageForBatch(session: Session, msg: IncomingMessage): void {
+  const image: FaturaImage = {
+    base64: msg.imageBuffer!.toString('base64'),
+    mimeType: (msg.imageMimeType ?? 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
+  };
+
+  const existing = session.imageBatches.get(msg.jid);
+  if (existing) {
+    // Reseta o timer e adiciona ao batch existente
+    clearTimeout(existing.timer);
+    existing.images.push(image);
+    if (msg.text) existing.captions.push(msg.text);
+    existing.timer = setTimeout(() => void processFaturaBatch(session, msg.jid), IMAGE_BATCH_DEBOUNCE_MS);
+    logger.info({ userId: session.userId, size: existing.images.length }, 'imagem adicionada ao batch');
+    return;
+  }
+
+  const batch: FaturaBatch = {
+    images: [image],
+    captions: msg.text ? [msg.text] : [],
+    createdAt: Date.now(),
+    timer: setTimeout(() => void processFaturaBatch(session, msg.jid), IMAGE_BATCH_DEBOUNCE_MS),
+  };
+  session.imageBatches.set(msg.jid, batch);
+  logger.info({ userId: session.userId }, 'batch de imagens iniciado');
+
+  // Aviso rapido pro usuario nao ficar em silencio
+  session
+    .reply(msg.jid, '📸 Recebendo imagens... aguarda uns segundos.')
+    .catch((err) => logger.warn({ err }, 'Falha ao enviar aviso de batch'));
+}
+
+/** Processa todas as imagens acumuladas numa unica call ao LLM. */
+export async function processFaturaBatch(session: Session, jid: string): Promise<void> {
+  const batch = session.imageBatches.get(jid);
+  if (!batch) return;
+  session.imageBatches.delete(jid);
+
   const [categories, cards] = await Promise.all([
     session.fincontrol.listCategories(),
     session.fincontrol.listCards(),
   ]);
-
   if (categories.length === 0) {
-    await session.reply(msg.jid, 'Você não tem categorias cadastradas. Cadastre no app primeiro.');
+    await session.reply(jid, 'Você não tem categorias cadastradas. Cadastre no app primeiro.');
     return;
   }
 
-  const imageBase64 = msg.imageBuffer!.toString('base64');
-  const mime = (msg.imageMimeType ?? 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
-
-  await session.reply(msg.jid, '📸 Analisando fatura... aguarda uns segundos.');
+  const caption = batch.captions.join(' | ');
+  const countMsg = batch.images.length === 1
+    ? '📊 Analisando 1 imagem...'
+    : `📊 Analisando ${batch.images.length} imagens em conjunto...`;
+  await session.reply(jid, countMsg);
 
   try {
-    const systemPrompt = buildFaturaPrompt(categories, cards, msg.text ?? '');
-    const parsed = await interpretFatura(systemPrompt, imageBase64, mime);
+    const systemPrompt = buildFaturaPrompt(categories, cards, caption);
+    const parsed = await interpretFatura(systemPrompt, batch.images);
 
     if (!parsed.transactions || parsed.transactions.length === 0) {
-      await session.reply(msg.jid, 'Não consegui extrair nenhuma transação dessa imagem. Tem certeza que é uma fatura?');
+      await session.reply(jid, 'Não consegui extrair nenhuma transação dessas imagens. Tem certeza que são faturas ou comprovantes?');
       return;
     }
 
@@ -94,11 +194,11 @@ async function handleImage(session: Session, msg: IncomingMessage): Promise<void
       createdAt: Date.now(),
       cardHint: parsed.cardHint,
     };
-    session.pendingImports.set(msg.jid, pending);
-    await session.reply(msg.jid, preview);
+    session.pendingImports.set(jid, pending);
+    await session.reply(jid, preview);
   } catch (err) {
-    logger.error({ err, userId: session.userId }, 'Falha ao processar fatura');
-    await session.reply(msg.jid, 'Erro ao processar a fatura. A imagem está legível?');
+    logger.error({ err, userId: session.userId }, 'Falha ao processar batch de imagens');
+    await session.reply(jid, 'Erro ao processar as imagens. Elas estão legíveis?');
   }
 }
 
@@ -208,17 +308,55 @@ async function handleCreate(session: Session, txs: TransactionRequest[] | undefi
     return;
   }
   const results: CreationResult[] = [];
+  const duplicates: PendingDuplicateItem[] = [];
   for (const tx of txs) {
     try {
       const created = await session.fincontrol.createTransaction(tx);
       results.push({ ok: true, payload: tx, created });
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'erro desconhecido';
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      if (status === 409 && data?.error === 'DUPLICATE_TRANSACTION' && data?.existing) {
+        // Guarda pra perguntar ao usuario
+        duplicates.push({ request: tx, existing: data.existing as TransactionResponse });
+        continue;
+      }
+      const msg = data?.message ?? err?.message ?? 'erro desconhecido';
       logger.error({ err: msg, userId: session.userId, payload: tx }, 'Falha ao criar');
       results.push({ ok: false, payload: tx, error: String(msg) });
     }
   }
-  await session.reply(jid, buildCreateSummary(results));
+
+  // Manda summary das que foram OK (ou dos erros que nao sao duplicatas)
+  if (results.length > 0) {
+    await session.reply(jid, buildCreateSummary(results));
+  }
+
+  // Depois, se tem duplicatas pendentes, pergunta
+  if (duplicates.length > 0) {
+    session.pendingDuplicates.set(jid, { items: duplicates, createdAt: Date.now() });
+    await session.reply(jid, buildDuplicatesPrompt(duplicates));
+  }
+}
+
+function buildDuplicatesPrompt(items: PendingDuplicateItem[]): string {
+  const lines: string[] = [];
+  if (items.length === 1) {
+    const it = items[0];
+    lines.push('⚠️ Já tem uma parecida cadastrada hoje:');
+    lines.push(`  ${it.existing.description} — ${formatBrl(it.existing.amount)} (${formatDate(it.existing.transactionDate)})`);
+    lines.push('');
+    lines.push('Cadastrar mesmo assim? Responda "sim" ou "não".');
+  } else {
+    lines.push(`⚠️ ${items.length} das que você quer criar já têm parecidas cadastradas hoje:`);
+    for (const it of items) {
+      lines.push(`  • Nova: ${it.request.description} ${formatBrl(it.request.amount)}`);
+      lines.push(`    Existente: ${it.existing.description} ${formatBrl(it.existing.amount)}`);
+    }
+    lines.push('');
+    lines.push('Criar todas mesmo assim? Responda "sim" ou "não".');
+  }
+  return lines.join('\n');
 }
 
 async function handleEdit(

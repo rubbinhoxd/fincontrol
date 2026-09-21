@@ -205,10 +205,19 @@ function PendingGroupView({ onCopyMsg, copiedMsg }: { onCopyMsg: () => void; cop
         <h2 className="text-xl font-semibold dark:text-gray-100">Conectado! Falta 1 passo</h2>
       </div>
 
-      <p className="text-gray-600 dark:text-gray-300 mb-4">
+      <p className="text-gray-600 dark:text-gray-300 mb-3">
         Pra deixar tudo pronto, crie um <strong>grupo só com você</strong> no WhatsApp e
         mande uma mensagem qualquer nele. A gente detecta e ativa automaticamente.
       </p>
+
+      <div className="bg-mint/50 dark:bg-primary/10 border border-primary/20 rounded-lg p-3 mb-4">
+        <p className="text-xs text-gray-700 dark:text-gray-300">
+          💡 <strong>O WhatsApp não deixa criar grupo só com você.</strong> A saída é:
+          criar um grupo com qualquer contato de confiança, entrar nas configurações
+          do grupo e <strong>remover essa pessoa</strong>. No fim, sobra só você — e
+          é aí que o Savey conecta.
+        </p>
+      </div>
 
       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4 space-y-3">
         <div>

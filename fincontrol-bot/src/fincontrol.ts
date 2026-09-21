@@ -114,9 +114,12 @@ export class FincontrolClient {
     return res.data;
   }
 
-  async createTransaction(payload: TransactionRequest): Promise<TransactionResponse> {
+  async createTransaction(payload: TransactionRequest, force = false): Promise<TransactionResponse> {
     const res = await this.withAuth(() =>
-      this.http.post<TransactionResponse>('/transactions', payload, { headers: this.authHeader() })
+      this.http.post<TransactionResponse>('/transactions', payload, {
+        headers: this.authHeader(),
+        params: force ? { force: 'true' } : undefined,
+      })
     );
     return res.data;
   }

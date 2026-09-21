@@ -7,6 +7,7 @@ import com.fincontrol.entity.Category;
 import com.fincontrol.entity.Transaction;
 import com.fincontrol.entity.User;
 import com.fincontrol.enums.TransactionType;
+import com.fincontrol.exception.DuplicateTransactionException;
 import com.fincontrol.exception.ResourceNotFoundException;
 import com.fincontrol.repository.CardRepository;
 import com.fincontrol.repository.CategoryRepository;
@@ -67,6 +68,15 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponse create(UUID userId, TransactionRequest request) {
+        return create(userId, request, false);
+    }
+
+    @Transactional
+    public TransactionResponse create(UUID userId, TransactionRequest request, boolean force) {
+        if (!force) {
+            checkForDuplicate(userId, request);
+        }
+
         User user = userRepository.getReferenceById(userId);
         Category category = categoryRepository.findById(request.getCategoryId())
                 .filter(c -> c.getUser().getId().equals(userId))
@@ -305,6 +315,22 @@ public class TransactionService {
     private boolean resolveSharedFlag(Card card, Boolean requestedShared) {
         if (!Boolean.TRUE.equals(requestedShared)) return false;
         return card != null && Boolean.TRUE.equals(card.getShared());
+    }
+
+    /**
+     * Verifica duplicata: mesma data, mesmo valor, descricao similar.
+     * Se encontrar, lanca DuplicateTransactionException com a transacao existente
+     * (o controller retorna 409 com o payload, e o bot/frontend pergunta ao usuario).
+     */
+    private void checkForDuplicate(UUID userId, TransactionRequest request) {
+        if (request.getDescription() == null) return;
+        List<Transaction> candidates = transactionRepository.findSameDayAndAmount(
+                userId, request.getTransactionDate(), request.getAmount());
+        for (Transaction t : candidates) {
+            if (DuplicateCheck.matches(t, request.getDescription())) {
+                throw new DuplicateTransactionException(toResponse(t));
+            }
+        }
     }
 
     private TransactionResponse toResponse(Transaction t) {

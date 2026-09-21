@@ -11,7 +11,7 @@ import pino from 'pino';
 import QRCode from 'qrcode';
 import { config } from '../config.js';
 import { FincontrolClient } from '../fincontrol.js';
-import { handleMessage } from './messageHandler.js';
+import { handleMessage, processFaturaBatch, FaturaBatch, PendingDuplicates } from './messageHandler.js';
 import { PendingImport } from '../types.js';
 
 const logger = pino({ level: config.logLevel }).child({ mod: 'session' });
@@ -41,6 +41,10 @@ export class Session {
 
   readonly fincontrol: FincontrolClient;
   readonly pendingImports = new Map<string, PendingImport>();
+  // Batches de imagens em andamento (debounce). Chave = jid.
+  readonly imageBatches = new Map<string, FaturaBatch>();
+  // Duplicatas aguardando confirmacao do usuario ("cadastrar mesmo assim?"). Chave = jid.
+  readonly pendingDuplicates = new Map<string, PendingDuplicates>();
 
   constructor(userId: string, allowedJid: string | null) {
     this.userId = userId;

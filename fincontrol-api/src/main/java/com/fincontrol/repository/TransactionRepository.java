@@ -22,6 +22,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     @Query("SELECT MAX(t.createdAt) FROM Transaction t WHERE t.user.id = :userId")
     Optional<LocalDateTime> findLastTransactionCreatedAt(UUID userId);
 
+    /** Transacoes do mesmo dia com mesmo valor — candidatas a duplicata. */
+    @Query("SELECT t FROM Transaction t JOIN FETCH t.category " +
+           "WHERE t.user.id = :userId AND t.transactionDate = :date AND t.amount = :amount")
+    List<Transaction> findSameDayAndAmount(UUID userId, LocalDate date, BigDecimal amount);
+
     @Query("SELECT t FROM Transaction t JOIN FETCH t.category " +
            "WHERE t.user.id = :userId AND t.transactionDate BETWEEN :startDate AND :endDate " +
            "ORDER BY t.transactionDate DESC")

@@ -3,6 +3,7 @@ package com.fincontrol.controller;
 import com.fincontrol.dto.request.TransactionRequest;
 import com.fincontrol.dto.response.TransactionResponse;
 import com.fincontrol.enums.TransactionType;
+import com.fincontrol.exception.DuplicateTransactionException;
 import com.fincontrol.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -38,11 +40,22 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<TransactionResponse> create(
+    public ResponseEntity<?> create(
             @AuthenticationPrincipal UUID userId,
-            @Valid @RequestBody TransactionRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(transactionService.create(userId, request));
+            @Valid @RequestBody TransactionRequest request,
+            @RequestParam(name = "force", defaultValue = "false") boolean force) {
+        try {
+            TransactionResponse created = transactionService.create(userId, request, force);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (DuplicateTransactionException e) {
+            // 409 com payload da existente — bot/frontend pergunta ao usuario;
+            // se ele confirmar, chama de novo com ?force=true.
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "error", "DUPLICATE_TRANSACTION",
+                    "message", e.getMessage(),
+                    "existing", e.getExisting()
+            ));
+        }
     }
 
     @PutMapping("/{id}")

@@ -50,36 +50,43 @@ export async function interpret(systemPrompt: string, userMessage: string): Prom
  * Chama Claude Haiku em modo VISION com uma imagem de fatura.
  * A imagem vai como bloco `image` base64. Retorna o array de transacoes ja parseado.
  */
+export interface FaturaImage {
+  base64: string;
+  mimeType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+}
+
 export async function interpretFatura(
   systemPrompt: string,
-  imageBase64: string,
+  imagesInput: string | FaturaImage[],
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' = 'image/jpeg'
 ): Promise<FaturaLlmResponse> {
+  // Backward-compatible: aceita 1 imagem como string (assinatura antiga) OU array de imagens
+  const images: FaturaImage[] = typeof imagesInput === 'string'
+    ? [{ base64: imagesInput, mimeType }]
+    : imagesInput;
+
   const started = Date.now();
+
+  const content: Anthropic.MessageParam['content'] = images.map((img) => ({
+    type: 'image' as const,
+    source: {
+      type: 'base64' as const,
+      media_type: img.mimeType,
+      data: img.base64,
+    },
+  }));
+
+  const instructionText = images.length === 1
+    ? 'Extraia todas as compras da fatura conforme as regras. Responda apenas com o JSON.'
+    : `Voce recebeu ${images.length} imagens de fatura (podem ser prints do mesmo documento ou de partes diferentes). Extraia TODAS as transacoes UNICAS — se a mesma transacao aparecer em mais de uma imagem, cadastre uma so vez. Responda apenas com o JSON.`;
+
+  content.push({ type: 'text', text: instructionText });
 
   const response = await client.messages.create({
     model: config.anthropic.model,
-    max_tokens: 8192, // fatura pode ter 30+ linhas; folga pra nao cortar JSON no meio
+    max_tokens: 8192,
     system: systemPrompt,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: mimeType,
-              data: imageBase64,
-            },
-          },
-          {
-            type: 'text',
-            text: 'Extraia todas as compras da fatura conforme as regras. Responda apenas com o JSON.',
-          },
-        ],
-      },
-    ],
+    messages: [{ role: 'user', content }],
   });
 
   const elapsed = Date.now() - started;
@@ -90,7 +97,7 @@ export async function interpretFatura(
     .join('')
     .trim();
 
-  logger.info({ elapsed, tokens: response.usage }, 'Resposta LLM (fatura)');
+  logger.info({ elapsed, tokens: response.usage, imageCount: images.length }, 'Resposta LLM (fatura)');
   logger.debug({ raw }, 'Raw LLM output (fatura)');
 
   const jsonText = extractJson(raw);
