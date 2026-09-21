@@ -86,6 +86,10 @@ export class Session {
       retryRequestDelayMs: 500,
       connectTimeoutMs: 60_000,
       defaultQueryTimeoutMs: 60_000,
+      // NAO marca a sessao como online. Se marcar, o WhatsApp assume que o bot
+      // ja esta recebendo tudo em tempo real e para de mandar push pro celular
+      // do usuario. Com false, o celular continua recebendo notificacoes normais.
+      markOnlineOnConnect: false,
     });
 
     this.sock.ev.on('creds.update', saveCreds);
