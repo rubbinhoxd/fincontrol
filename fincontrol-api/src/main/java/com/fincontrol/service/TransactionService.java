@@ -134,6 +134,23 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponse update(UUID userId, UUID transactionId, TransactionRequest request) {
+        return update(userId, transactionId, request, "single");
+    }
+
+    /**
+     * Edicao com escopo pra transacoes em grupo (recorrente ou parcelamento).
+     * scope:
+     *   - "single" (default): so a transacao especifica
+     *   - "future": esta + todas do mesmo grupo com data > esta
+     *   - "all": todas do mesmo grupo (incluindo passadas)
+     *
+     * Campos propagados pro grupo: description, amount, categoryId, cardId,
+     * type, notes, flags (planned/fixed/recurring/subscription/essential/impulse/
+     * sharedWithPartner). NAO propaga: transactionDate, currentInstallment,
+     * totalInstallments, installmentGroupId, recurringGroupId.
+     */
+    @Transactional
+    public TransactionResponse update(UUID userId, UUID transactionId, TransactionRequest request, String scope) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .filter(t -> t.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction", transactionId));
@@ -144,22 +161,9 @@ public class TransactionService {
         Card card = resolveCard(userId, request.getCardId());
         boolean shared = resolveSharedFlag(card, request.getSharedWithPartner());
 
-        transaction.setCategory(category);
-        transaction.setCard(card);
-        transaction.setType(request.getType());
-        transaction.setDescription(request.getDescription());
-        transaction.setAmount(request.getAmount());
-        transaction.setTransactionDate(request.getTransactionDate());
-        transaction.setPlanned(request.getPlanned());
-        transaction.setFixed(request.getFixed());
-        transaction.setRecurring(request.getRecurring());
-        transaction.setSubscription(request.getSubscription());
-        transaction.setEssential(request.getEssential());
-        transaction.setImpulse(request.getImpulse());
-        transaction.setSharedWithPartner(shared);
-        transaction.setNotes(request.getNotes());
+        applyRequestToTransaction(transaction, request, category, card, shared);
 
-        // Ativar recorrencia em transacao existente
+        // Ativar recorrencia em transacao existente (so faz sentido no scope "single")
         if (Boolean.TRUE.equals(request.getActivateRecurring()) && transaction.getRecurringGroupId() == null
                 && transaction.getInstallmentGroupId() == null) {
             User user = userRepository.getReferenceById(userId);
@@ -169,11 +173,71 @@ public class TransactionService {
             transaction.setFixed(true);
             transaction = transactionRepository.save(transaction);
             createFutureRecurring(transaction, user, category, groupId);
-        } else {
-            transaction = transactionRepository.save(transaction);
+            return toResponse(transaction);
+        }
+
+        transaction = transactionRepository.save(transaction);
+
+        // Propagacao pro grupo
+        if (("future".equals(scope) || "all".equals(scope))) {
+            List<Transaction> siblings = findSiblingsForScope(transaction, scope);
+            for (Transaction sibling : siblings) {
+                if (sibling.getId().equals(transaction.getId())) continue;
+                applyGroupPropagation(sibling, request, category, card, shared);
+            }
+            transactionRepository.saveAll(siblings);
         }
 
         return toResponse(transaction);
+    }
+
+    private List<Transaction> findSiblingsForScope(Transaction transaction, String scope) {
+        if (transaction.getRecurringGroupId() != null) {
+            return "all".equals(scope)
+                    ? transactionRepository.findAllRecurring(transaction.getRecurringGroupId())
+                    : transactionRepository.findFutureRecurring(transaction.getRecurringGroupId(), transaction.getTransactionDate());
+        }
+        if (transaction.getInstallmentGroupId() != null) {
+            return "all".equals(scope)
+                    ? transactionRepository.findAllInstallments(transaction.getInstallmentGroupId())
+                    : transactionRepository.findInstallmentsAfterDate(transaction.getInstallmentGroupId(), transaction.getTransactionDate());
+        }
+        return List.of();
+    }
+
+    /** Aplica campos do request na transacao principal (todos os campos, inclusive data). */
+    private void applyRequestToTransaction(Transaction t, TransactionRequest r, Category category, Card card, boolean shared) {
+        t.setCategory(category);
+        t.setCard(card);
+        t.setType(r.getType());
+        t.setDescription(r.getDescription());
+        t.setAmount(r.getAmount());
+        t.setTransactionDate(r.getTransactionDate());
+        t.setPlanned(r.getPlanned());
+        t.setFixed(r.getFixed());
+        t.setRecurring(r.getRecurring());
+        t.setSubscription(r.getSubscription());
+        t.setEssential(r.getEssential());
+        t.setImpulse(r.getImpulse());
+        t.setSharedWithPartner(shared);
+        t.setNotes(r.getNotes());
+    }
+
+    /** Aplica mudancas em uma transacao-irma do grupo. NAO toca em data, parcela nem groupId. */
+    private void applyGroupPropagation(Transaction t, TransactionRequest r, Category category, Card card, boolean shared) {
+        t.setCategory(category);
+        t.setCard(card);
+        t.setType(r.getType());
+        t.setDescription(r.getDescription());
+        t.setAmount(r.getAmount());
+        t.setPlanned(r.getPlanned());
+        t.setFixed(r.getFixed());
+        t.setRecurring(r.getRecurring());
+        t.setSubscription(r.getSubscription());
+        t.setEssential(r.getEssential());
+        t.setImpulse(r.getImpulse());
+        t.setSharedWithPartner(shared);
+        t.setNotes(r.getNotes());
     }
 
     @Transactional

@@ -14,8 +14,8 @@ export const getTransaction = (id: string) =>
 export const createTransaction = (data: TransactionRequest) =>
   client.post<Transaction>('/transactions', data);
 
-export const updateTransaction = (id: string, data: TransactionRequest) =>
-  client.put<Transaction>(`/transactions/${id}`, data);
+export const updateTransaction = (id: string, data: TransactionRequest, scope: 'single' | 'future' | 'all' = 'single') =>
+  client.put<Transaction>(`/transactions/${id}`, data, { params: { scope } });
 
 export const deleteTransaction = (id: string, mode: 'single' | 'future' = 'single') =>
   client.delete(`/transactions/${id}`, { params: { mode } });

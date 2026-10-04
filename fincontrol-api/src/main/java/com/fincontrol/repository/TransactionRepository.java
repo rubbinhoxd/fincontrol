@@ -109,6 +109,19 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
            "AND t.transactionDate >= :fromDate")
     List<Transaction> findRecurringFromDate(UUID groupId, LocalDate fromDate);
 
+    /** Todas as transacoes de um grupo recorrente (independente da data). */
+    @Query("SELECT t FROM Transaction t WHERE t.recurringGroupId = :groupId")
+    List<Transaction> findAllRecurring(UUID groupId);
+
+    /** Parcelas futuras baseadas na data (nao no currentInstallment). */
+    @Query("SELECT t FROM Transaction t WHERE t.installmentGroupId = :groupId " +
+           "AND t.transactionDate > :afterDate")
+    List<Transaction> findInstallmentsAfterDate(UUID groupId, LocalDate afterDate);
+
+    /** Todas as parcelas de um grupo. */
+    @Query("SELECT t FROM Transaction t WHERE t.installmentGroupId = :groupId")
+    List<Transaction> findAllInstallments(UUID groupId);
+
     // Fatura total do cartao (joint view) — soma o valor cheio
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t " +
            "WHERE t.card.id = :cardId AND t.type = 'EXPENSE' " +

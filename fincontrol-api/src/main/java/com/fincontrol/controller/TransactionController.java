@@ -62,8 +62,9 @@ public class TransactionController {
     public ResponseEntity<TransactionResponse> update(
             @AuthenticationPrincipal UUID userId,
             @PathVariable UUID id,
-            @Valid @RequestBody TransactionRequest request) {
-        return ResponseEntity.ok(transactionService.update(userId, id, request));
+            @Valid @RequestBody TransactionRequest request,
+            @RequestParam(name = "scope", defaultValue = "single") String scope) {
+        return ResponseEntity.ok(transactionService.update(userId, id, request, scope));
     }
 
     @DeleteMapping("/{id}")

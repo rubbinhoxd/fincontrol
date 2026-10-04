@@ -19,6 +19,9 @@ export default function TransactionForm() {
   const [isExistingInstallment, setIsExistingInstallment] = useState(false);
   const [isExistingRecurring, setIsExistingRecurring] = useState(false);
   const [canActivateRecurring, setCanActivateRecurring] = useState(false);
+  // Escopo da edicao pra transacoes em grupo (recorrente/parcelamento):
+  //   'single' = so esta  |  'future' = esta + futuras  |  'all' = todas (incluindo passadas)
+  const [editScope, setEditScope] = useState<'single' | 'future' | 'all'>('single');
 
   const [form, setForm] = useState<TransactionRequest>({
     categoryId: '',
@@ -114,7 +117,9 @@ export default function TransactionForm() {
 
     try {
       if (isEdit) {
-        await updateTransaction(id, form);
+        // Transacao em grupo (recorrente/parcelamento) manda scope; senao, default 'single'
+        const scope = (isExistingRecurring || isExistingInstallment) ? editScope : 'single';
+        await updateTransaction(id, form, scope);
       } else {
         await createTransaction(form);
       }
@@ -316,6 +321,37 @@ export default function TransactionForm() {
             rows={2}
           />
         </Field>
+
+        {/* Escopo da edicao para transacoes em grupo (recorrente ou parcelamento) */}
+        {isEdit && (isExistingRecurring || isExistingInstallment) && (
+          <div className="bg-mint/40 dark:bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
+            <p className="text-sm font-medium dark:text-gray-200">
+              Essa transação faz parte de um grupo {isExistingRecurring ? 'recorrente' : 'parcelado'}. Aplicar a edição em:
+            </p>
+            <div className="space-y-1">
+              {[
+                { v: 'single' as const, label: 'Apenas esta' },
+                { v: 'future' as const, label: 'Esta e todas as futuras' },
+                { v: 'all' as const, label: 'Todas (inclui as passadas)' },
+              ].map((opt) => (
+                <label key={opt.v} className="flex items-center gap-2 text-sm cursor-pointer dark:text-gray-300">
+                  <input
+                    type="radio"
+                    name="editScope"
+                    value={opt.v}
+                    checked={editScope === opt.v}
+                    onChange={() => setEditScope(opt.v)}
+                    className="accent-primary"
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              💡 A data da transação não é propagada — cada ocorrência mantém sua data original.
+            </p>
+          </div>
+        )}
 
         {error && <p className="text-sm text-danger">{error}</p>}
 
