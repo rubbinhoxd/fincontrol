@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ChevronsUpDown, Download, FileSpreadsheet, FileText } from 'lucide-react';
 import PageContainer from '../components/layout/PageContainer';
 import { listTransactions, deleteTransaction } from '../api/transactions';
 import { listCategories } from '../api/categories';
 import type { Transaction, Category, TransactionType } from '../types';
 import { formatCurrency } from '../utils/currency';
 import { formatDate, getCurrentYearMonth, formatYearMonth, previousYearMonth, nextYearMonth } from '../utils/date';
+import { exportTransactionsToCsv, exportTransactionsToPdf } from '../utils/exportTransactions';
 
 type SortColumn = 'date' | 'description' | 'category' | 'amount';
 
@@ -95,17 +96,83 @@ export default function Transactions() {
       ? 'bg-success/10 text-success'
       : 'bg-danger/10 text-danger';
 
+  // Dropdown de export
+  const [exportOpen, setExportOpen] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
+
+  const buildExportMeta = () => {
+    const typeLabel = filterType === 'INCOME' ? 'Receitas' : filterType === 'EXPENSE' ? 'Despesas' : 'Todos os tipos';
+    const classificationLabel =
+      filterClassification === 'INSTALLMENT' ? 'Parcelados' :
+      filterClassification === 'FIXED' ? 'Fixos' :
+      filterClassification === 'AVULSO' ? 'Avulsos' : '';
+    const categoryLabel = filterCategory ? categories.find((c) => c.id === filterCategory)?.name ?? '' : '';
+    return {
+      yearMonth,
+      yearMonthLabel: formatYearMonth(yearMonth),
+      totalIncome,
+      totalExpense,
+      totalCount,
+      filters: { type: typeLabel, classification: classificationLabel, category: categoryLabel },
+    };
+  };
+
+  const handleExportCsv = () => {
+    exportTransactionsToCsv(sortedTransactions, buildExportMeta());
+    setExportOpen(false);
+  };
+  const handleExportPdf = () => {
+    exportTransactionsToPdf(sortedTransactions, buildExportMeta());
+    setExportOpen(false);
+  };
+
   return (
     <PageContainer
       title="Transações"
       action={
-        <button
-          onClick={() => navigate('/transactions/new')}
-          className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
-        >
-          <Plus size={18} />
-          Nova transação
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative" ref={exportRef}>
+            <button
+              onClick={() => setExportOpen((v) => !v)}
+              disabled={sortedTransactions.length === 0}
+              className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download size={18} />
+              Exportar
+              <ChevronDown size={14} />
+            </button>
+            {exportOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 overflow-hidden">
+                <button
+                  onClick={handleExportCsv}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-left"
+                >
+                  <FileSpreadsheet size={16} /> CSV
+                </button>
+                <button
+                  onClick={handleExportPdf}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-left"
+                >
+                  <FileText size={16} /> PDF
+                </button>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => navigate('/transactions/new')}
+            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
+          >
+            <Plus size={18} />
+            Nova transação
+          </button>
+        </div>
       }
     >
       {/* Month nav + filters */}
