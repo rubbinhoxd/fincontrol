@@ -26,7 +26,7 @@ export default function Transactions() {
     setSort((current) => {
       if (!current || current.column !== column) return { column, direction: 'asc' };
       if (current.direction === 'asc') return { column, direction: 'desc' };
-      return null; // 3o clique volta pra ordem da api
+      return null;
     });
   };
 
@@ -91,12 +91,6 @@ export default function Transactions() {
   const totalExpense = filteredTransactions.filter((t) => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0);
   const totalCount = filteredTransactions.length;
 
-  const typeBadge = (type: TransactionType) =>
-    type === 'INCOME'
-      ? 'bg-success/10 text-success'
-      : 'bg-danger/10 text-danger';
-
-  // Dropdown de export
   const [exportOpen, setExportOpen] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -137,200 +131,374 @@ export default function Transactions() {
     <PageContainer
       title="Transações"
       action={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="relative" ref={exportRef}>
             <button
               onClick={() => setExportOpen((v) => !v)}
               disabled={sortedTransactions.length === 0}
-              className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-ghost disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Download size={18} />
+              <Download size={16} />
               Exportar
               <ChevronDown size={14} />
             </button>
             {exportOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 overflow-hidden">
+              <div
+                className="absolute right-0 mt-2 w-48 z-10 overflow-hidden"
+                style={{
+                  backgroundColor: 'var(--color-deep-surface)',
+                  border: '1px solid var(--color-steel-border)',
+                  borderRadius: 'var(--radius-xl)',
+                  boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)',
+                }}
+              >
                 <button
                   onClick={handleExportCsv}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-left"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-white/5 transition-colors"
+                  style={{ color: 'var(--color-fog)' }}
                 >
                   <FileSpreadsheet size={16} /> CSV
                 </button>
                 <button
                   onClick={handleExportPdf}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-left"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-white/5 transition-colors"
+                  style={{ color: 'var(--color-fog)' }}
                 >
                   <FileText size={16} /> PDF
                 </button>
               </div>
             )}
           </div>
-          <button
-            onClick={() => navigate('/transactions/new')}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
-          >
-            <Plus size={18} />
+          <button onClick={() => navigate('/transactions/new')} className="btn-primary">
+            <Plus size={16} />
             Nova transação
           </button>
         </div>
       }
     >
       {/* Month nav + filters */}
-      <div className="flex flex-wrap items-center gap-4 mb-6">
-        <div className="flex items-center gap-2">
-          <button onClick={() => setYearMonth(previousYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-            <ChevronLeft size={18} />
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div
+          className="flex items-center gap-1 px-2 py-1 rounded-full"
+          style={{
+            backgroundColor: 'var(--color-deep-surface)',
+            border: '1px solid var(--color-steel-border)',
+          }}
+        >
+          <button
+            onClick={() => setYearMonth(previousYearMonth(yearMonth))}
+            className="p-1.5 rounded-full hover:bg-white/5 transition-colors"
+            style={{ color: 'var(--color-fog)' }}
+          >
+            <ChevronLeft size={16} />
           </button>
-          <span className="font-medium min-w-40 text-center">{formatYearMonth(yearMonth)}</span>
-          <button onClick={() => setYearMonth(nextYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-            <ChevronRight size={18} />
+          <span
+            className="px-2 text-sm min-w-36 text-center"
+            style={{ color: 'var(--color-paper-white)', fontWeight: 400 }}
+          >
+            {formatYearMonth(yearMonth)}
+          </span>
+          <button
+            onClick={() => setYearMonth(nextYearMonth(yearMonth))}
+            className="p-1.5 rounded-full hover:bg-white/5 transition-colors"
+            style={{ color: 'var(--color-fog)' }}
+          >
+            <ChevronRight size={16} />
           </button>
         </div>
 
-        <select
+        <FilterSelect
           value={filterType}
-          onChange={(e) => setFilterType(e.target.value as TransactionType | '')}
-          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm"
-        >
-          <option value="">Todos os tipos</option>
-          <option value="INCOME">Receitas</option>
-          <option value="EXPENSE">Despesas</option>
-        </select>
+          onChange={(v) => setFilterType(v as TransactionType | '')}
+          options={[
+            { value: '', label: 'Todos os tipos' },
+            { value: 'INCOME', label: 'Receitas' },
+            { value: 'EXPENSE', label: 'Despesas' },
+          ]}
+        />
 
-        <select
+        <FilterSelect
           value={filterClassification}
-          onChange={(e) => setFilterClassification(e.target.value as '' | 'INSTALLMENT' | 'FIXED' | 'AVULSO')}
-          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm"
-        >
-          <option value="">Todas as classificacoes</option>
-          <option value="INSTALLMENT">Parcelados</option>
-          <option value="FIXED">Fixos</option>
-          <option value="AVULSO">Avulsos</option>
-        </select>
+          onChange={(v) => setFilterClassification(v as '' | 'INSTALLMENT' | 'FIXED' | 'AVULSO')}
+          options={[
+            { value: '', label: 'Todas as classificações' },
+            { value: 'INSTALLMENT', label: 'Parcelados' },
+            { value: 'FIXED', label: 'Fixos' },
+            { value: 'AVULSO', label: 'Avulsos' },
+          ]}
+        />
 
-        <select
+        <FilterSelect
           value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-1.5 text-sm"
-        >
-          <option value="">Todas as categorias</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name} ({c.type === 'INCOME' ? 'Receita' : 'Despesa'})</option>
-          ))}
-        </select>
+          onChange={setFilterCategory}
+          options={[
+            { value: '', label: 'Todas as categorias' },
+            ...categories.map((c) => ({
+              value: c.id,
+              label: `${c.name} (${c.type === 'INCOME' ? 'Receita' : 'Despesa'})`,
+            })),
+          ]}
+        />
       </div>
 
       {/* Totalizador */}
       {!loading && filteredTransactions.length > 0 && (
         <div className="flex flex-wrap gap-4 mb-6">
           {(filterType !== 'EXPENSE') && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl px-5 py-3 shadow-sm border border-gray-100 dark:border-gray-800">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Receitas</p>
-              <p className="text-lg font-bold text-success">{formatCurrency(totalIncome)}</p>
-            </div>
+            <SummaryTile label="Receitas" value={formatCurrency(totalIncome)} tone="success" />
           )}
           {(filterType !== 'INCOME') && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl px-5 py-3 shadow-sm border border-gray-100 dark:border-gray-800">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Despesas</p>
-              <p className="text-lg font-bold text-danger">{formatCurrency(totalExpense)}</p>
-            </div>
+            <SummaryTile label="Despesas" value={formatCurrency(totalExpense)} tone="danger" />
           )}
           {!filterType && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl px-5 py-3 shadow-sm border border-gray-100 dark:border-gray-800">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Saldo</p>
-              <p className={`text-lg font-bold ${totalIncome - totalExpense >= 0 ? 'text-success' : 'text-danger'}`}>
-                {formatCurrency(totalIncome - totalExpense)}
-              </p>
-            </div>
+            <SummaryTile
+              label="Saldo"
+              value={formatCurrency(totalIncome - totalExpense)}
+              tone={totalIncome - totalExpense >= 0 ? 'success' : 'danger'}
+            />
           )}
-          <div className="bg-white dark:bg-gray-900 rounded-xl px-5 py-3 shadow-sm border border-gray-100 dark:border-gray-800">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Transações</p>
-            <p className="text-lg font-bold dark:text-gray-100">{totalCount}</p>
-          </div>
+          <SummaryTile label="Transações" value={String(totalCount)} tone="neutral" />
         </div>
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Carregando...</div>
+        <div
+          className="card-neo text-center py-16"
+          style={{ color: 'var(--color-mist)' }}
+        >
+          Carregando...
+        </div>
       ) : filteredTransactions.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">Nenhuma transação encontrada.</div>
+        <div
+          className="card-neo text-center py-16"
+          style={{ color: 'var(--color-mist)' }}
+        >
+          Nenhuma transação encontrada.
+        </div>
       ) : (
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-              <tr>
-                <SortableHeader label="Data" column="date" align="left" sort={sort} onToggle={toggleSort} />
-                <SortableHeader label="Descrição" column="description" align="left" sort={sort} onToggle={toggleSort} />
-                <SortableHeader label="Categoria" column="category" align="left" sort={sort} onToggle={toggleSort} />
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tipo</th>
-                <SortableHeader label="Valor" column="amount" align="right" sort={sort} onToggle={toggleSort} />
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tags</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {sortedTransactions.map((t) => (
-                <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <td className="px-4 py-3 text-sm">{formatDate(t.transactionDate)}</td>
-                  <td className="px-4 py-3 text-sm font-medium">{t.description}</td>
-                  <td className="px-4 py-3 text-sm">
-                    <span className="inline-flex items-center gap-1.5">
-                      {t.categoryColor && <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: t.categoryColor }} />}
-                      {t.categoryName}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${typeBadge(t.type)}`}>
-                      {t.type === 'INCOME' ? 'Receita' : 'Despesa'}
-                    </span>
-                  </td>
-                  <td className={`px-4 py-3 text-sm font-semibold text-right ${t.type === 'INCOME' ? 'text-success' : 'text-danger'}`}>
-                    {t.type === 'INCOME' ? '+' : '-'} {formatCurrency(t.amount)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {t.cardName && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded inline-flex items-center gap-1" style={t.cardColor ? { backgroundColor: `${t.cardColor}22`, color: t.cardColor } : { backgroundColor: '#e5e7eb', color: '#374151' }}>
-                          {t.cardColor && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.cardColor }} />}
-                          {t.cardName}
-                        </span>
-                      )}
-                      {t.sharedWithPartner && <Tag label="½ casal" color="bg-primary/10 text-primary" />}
-                      {t.totalInstallments && (
-                        <Tag
-                          label={t.currentInstallment ? `${t.currentInstallment}/${t.totalInstallments}` : `${t.totalInstallments}x`}
-                          color="bg-indigo-100 text-indigo-700"
-                        />
-                      )}
-                      {t.impulse && <Tag label="Impulso" color="bg-red-100 text-red-700" />}
-                      {!t.planned && !t.impulse && <Tag label="Não planejado" color="bg-orange-100 text-orange-700" />}
-                      {t.fixed && <Tag label="Fixo" color="bg-blue-100 text-blue-700" />}
-                      {t.subscription && <Tag label="Assinatura" color="bg-teal-100 text-teal-700" />}
-                      {!t.essential && <Tag label="Superfluo" color="bg-purple-100 text-purple-700" />}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => navigate(`/transactions/${t.id}/edit`)} className="p-1 text-gray-400 hover:text-primary rounded">
-                        <Pencil size={16} />
-                      </button>
-                      <button onClick={() => handleDelete(t)} className="p-1 text-gray-400 hover:text-danger rounded">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+        <div className="card-neo overflow-hidden" style={{ padding: 0 }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--color-steel-border)' }}>
+                  <SortableHeader label="Data" column="date" align="left" sort={sort} onToggle={toggleSort} />
+                  <SortableHeader label="Descrição" column="description" align="left" sort={sort} onToggle={toggleSort} />
+                  <SortableHeader label="Categoria" column="category" align="left" sort={sort} onToggle={toggleSort} />
+                  <th className="label-meta text-left px-4 py-4">Tipo</th>
+                  <SortableHeader label="Valor" column="amount" align="right" sort={sort} onToggle={toggleSort} />
+                  <th className="label-meta text-left px-4 py-4">Tags</th>
+                  <th className="px-4 py-4"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {sortedTransactions.map((t) => (
+                  <tr
+                    key={t.id}
+                    className="transition-colors"
+                    style={{ borderTop: '1px solid color-mix(in oklab, var(--color-steel-border) 50%, transparent)' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'color-mix(in oklab, var(--color-paper-white) 3%, transparent)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--color-fog)' }}>
+                      {formatDate(t.transactionDate)}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--color-paper-white)', fontWeight: 400 }}>
+                      {t.description}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm">
+                      <span className="inline-flex items-center gap-2" style={{ color: 'var(--color-fog)' }}>
+                        {t.categoryColor && (
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: t.categoryColor }}
+                          />
+                        )}
+                        {t.categoryName}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <TypeBadge type={t.type} />
+                    </td>
+                    <td
+                      className="px-4 py-3.5 text-sm text-right"
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 500,
+                        letterSpacing: '-0.01em',
+                        color: t.type === 'INCOME' ? 'var(--color-success)' : 'var(--color-danger)',
+                      }}
+                    >
+                      {t.type === 'INCOME' ? '+' : '−'} {formatCurrency(t.amount)}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex flex-wrap gap-1">
+                        {t.cardName && (
+                          <Tag
+                            label={t.cardName}
+                            color={t.cardColor || '#5c6f8a'}
+                            hasDot
+                          />
+                        )}
+                        {t.sharedWithPartner && <Tag label="½ casal" color="#10B981" />}
+                        {t.totalInstallments && (
+                          <Tag
+                            label={t.currentInstallment ? `${t.currentInstallment}/${t.totalInstallments}` : `${t.totalInstallments}x`}
+                            color="#9019e6"
+                          />
+                        )}
+                        {t.impulse && <Tag label="Impulso" color="#ff4433" />}
+                        {!t.planned && !t.impulse && <Tag label="Não planejado" color="#ff8833" />}
+                        {t.fixed && <Tag label="Fixo" color="#00acfe" />}
+                        {t.subscription && <Tag label="Assinatura" color="#00cc4b" />}
+                        {!t.essential && <Tag label="Supérfluo" color="#ff33aa" />}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-1 justify-end">
+                        <button
+                          onClick={() => navigate(`/transactions/${t.id}/edit`)}
+                          className="p-1.5 rounded-lg transition-colors"
+                          style={{ color: 'var(--color-mist)' }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = 'var(--color-signal)';
+                            e.currentTarget.style.backgroundColor = 'color-mix(in oklab, var(--color-signal) 10%, transparent)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = 'var(--color-mist)';
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(t)}
+                          className="p-1.5 rounded-lg transition-colors"
+                          style={{ color: 'var(--color-mist)' }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = 'var(--color-danger)';
+                            e.currentTarget.style.backgroundColor = 'color-mix(in oklab, var(--color-danger) 10%, transparent)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = 'var(--color-mist)';
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </PageContainer>
   );
 }
 
-function Tag({ label, color }: { label: string; color: string }) {
-  return <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${color}`}>{label}</span>;
+function FilterSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="text-sm px-3 py-2 rounded-full transition-colors cursor-pointer"
+      style={{
+        backgroundColor: 'var(--color-deep-surface)',
+        border: '1px solid var(--color-steel-border)',
+        color: 'var(--color-fog)',
+        fontWeight: 400,
+        appearance: 'none',
+        paddingRight: '32px',
+        backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999ca1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 10px center',
+      }}
+    >
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value} style={{ backgroundColor: '#061e1a', color: '#ccced0' }}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function SummaryTile({ label, value, tone }: { label: string; value: string; tone: 'success' | 'danger' | 'neutral' }) {
+  const valueColor =
+    tone === 'success' ? 'var(--color-success)' :
+    tone === 'danger' ? 'var(--color-danger)' :
+    'var(--color-paper-white)';
+  return (
+    <div
+      className="card-neo"
+      style={{ padding: '14px 20px', minWidth: 140 }}
+    >
+      <p className="label-meta" style={{ marginBottom: 4 }}>{label}</p>
+      <p
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontWeight: 500,
+          fontSize: 20,
+          letterSpacing: '-0.01em',
+          color: valueColor,
+        }}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function TypeBadge({ type }: { type: TransactionType }) {
+  const isIncome = type === 'INCOME';
+  return (
+    <span
+      className="text-[11px] px-2.5 py-1 rounded-full"
+      style={{
+        fontWeight: 500,
+        letterSpacing: '0.02em',
+        backgroundColor: isIncome
+          ? 'color-mix(in oklab, var(--color-success) 14%, transparent)'
+          : 'color-mix(in oklab, var(--color-danger) 14%, transparent)',
+        color: isIncome ? 'var(--color-success)' : 'var(--color-danger)',
+      }}
+    >
+      {isIncome ? 'Receita' : 'Despesa'}
+    </span>
+  );
+}
+
+function Tag({ label, color, hasDot }: { label: string; color: string; hasDot?: boolean }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap"
+      style={{
+        fontWeight: 500,
+        letterSpacing: '0.02em',
+        backgroundColor: `color-mix(in oklab, ${color} 16%, transparent)`,
+        color: color,
+        border: `1px solid color-mix(in oklab, ${color} 30%, transparent)`,
+      }}
+    >
+      {hasDot && (
+        <span
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: color }}
+        />
+      )}
+      {label}
+    </span>
+  );
 }
 
 function SortableHeader({
@@ -349,15 +517,20 @@ function SortableHeader({
   const active = sort?.column === column;
   const Icon = active ? (sort!.direction === 'asc' ? ChevronUp : ChevronDown) : ChevronsUpDown;
   return (
-    <th className={`px-4 py-3 text-xs font-medium uppercase ${align === 'right' ? 'text-right' : 'text-left'}`}>
+    <th className={`label-meta px-4 py-4 ${align === 'right' ? 'text-right' : 'text-left'}`}>
       <button
         onClick={() => onToggle(column)}
-        className={`inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 transition-colors ${
-          active ? 'text-gray-700 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'
-        }`}
+        className="inline-flex items-center gap-1.5 transition-colors"
+        style={{
+          color: active ? 'var(--color-signal)' : 'var(--color-mist)',
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+        }}
       >
         {label}
-        <Icon size={12} className={active ? '' : 'opacity-50'} />
+        <Icon size={12} className={active ? '' : 'opacity-60'} />
       </button>
     </th>
   );
