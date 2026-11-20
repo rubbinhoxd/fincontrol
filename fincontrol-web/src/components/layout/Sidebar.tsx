@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ArrowLeftRight, Tag, Settings, LogOut, Moon, Sun, FlaskConical, CreditCard, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Tag, Settings, LogOut, FlaskConical, CreditCard, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
 import { getWhatsAppStatus } from '../../api/whatsapp';
 
 const navItems = [
@@ -17,7 +16,6 @@ const navItems = [
 
 export default function Sidebar() {
   const { userName, logout } = useAuth();
-  const { dark, toggle } = useTheme();
   const [whatsAppActive, setWhatsAppActive] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -27,32 +25,70 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col min-h-screen">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-        <h1 className="text-xl font-bold text-primary">Savey</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{userName}</p>
+    <aside
+      className="w-64 flex flex-col min-h-screen"
+      style={{
+        backgroundColor: 'var(--color-deep-surface)',
+        borderRight: '1px solid var(--color-steel-border)',
+      }}
+    >
+      {/* Header: logo + nome do user */}
+      <div className="p-6" style={{ borderBottom: '1px solid var(--color-steel-border)' }}>
+        <div className="flex items-center gap-3 mb-2">
+          <img src="/favicon.png" alt="Savey" className="w-9 h-9 rounded-xl" />
+          <h1
+            className="text-xl"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 600,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-paper-white)',
+            }}
+          >
+            Savey
+          </h1>
+        </div>
+        <p
+          className="text-xs"
+          style={{ color: 'var(--color-mist)', fontWeight: 400, letterSpacing: '0.02em' }}
+        >
+          {userName}
+        </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      {/* Nav */}
+      <nav className="flex-1 p-3 space-y-1">
         {navItems.map(({ to, label, icon: Icon, badge }) => {
-          // Badge "novo" so aparece no assistente WhatsApp enquanto nao ativou
           const showBadge = badge === 'novo' && whatsAppActive === false;
           return (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
+                  isActive ? 'nav-link-active' : 'nav-link'
                 }`
+              }
+              style={({ isActive }) =>
+                isActive
+                  ? {
+                      backgroundColor: 'color-mix(in oklab, var(--color-signal) 15%, transparent)',
+                      color: 'var(--color-signal)',
+                      fontWeight: 500,
+                    }
+                  : {
+                      color: 'var(--color-fog)',
+                      fontWeight: 400,
+                    }
               }
             >
               <Icon size={18} />
               <span className="flex-1">{label}</span>
               {showBadge && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary text-white uppercase tracking-wide">
+                <span
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide"
+                  style={{ backgroundColor: 'var(--color-signal)', color: 'var(--color-paper-white)' }}
+                >
                   Novo
                 </span>
               )}
@@ -61,17 +97,12 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 space-y-1">
-        <button
-          onClick={toggle}
-          className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 w-full transition-colors"
-        >
-          {dark ? <Sun size={18} /> : <Moon size={18} />}
-          {dark ? 'Tema claro' : 'Tema escuro'}
-        </button>
+      {/* Footer: só sair (dark-only, sem toggle) */}
+      <div className="p-3" style={{ borderTop: '1px solid var(--color-steel-border)' }}>
         <button
           onClick={logout}
-          className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-danger rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 w-full transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full transition-colors hover:opacity-80"
+          style={{ color: 'var(--color-mist)', fontWeight: 400 }}
         >
           <LogOut size={18} />
           Sair
