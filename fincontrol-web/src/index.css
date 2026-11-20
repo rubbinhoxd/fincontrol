@@ -1,29 +1,221 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Dark mode via classe (vamos ser dark-only; main.tsx garante
+   html.dark sempre presente). Permite que classes legadas do tipo
+   `dark:bg-gray-900` continuem funcionando enquanto migramos tela a tela. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ===========================================
+   Savey Theme — Midnight (dark-only)
+   Baseado no DESIGN.md (visual Copilot Money)
+   mas adaptado pra paleta Savey (verde Growth).
+   =========================================== */
+
+@theme {
+  /* ---------- Colors ---------- */
+
+  /* Surfaces — midnight em tom verde (Savey adaptation) */
+  --color-midnight-canvas: #031611;   /* base canvas, quase-preto verde */
+  --color-deep-surface:    #061e1a;   /* nivel 1 — cards, nav wells */
+  --color-indigo-surface:  #0a2a24;   /* nivel 2 — nested panels */
+  --color-cobalt-surface:  #0F3D32;   /* nivel 3 — Evergreen Savey, featured blocks */
+
+  /* Texto e borders */
+  --color-paper-white:  #ffffff;
+  --color-fog:          #ccced0;
+  --color-mist:         #999ca1;
+  --color-steel-border: #1b3630;      /* hairline border em tom verde */
+
+  /* Accent — Growth Savey (substitui signal blue do Copilot) */
+  --color-signal:       #10B981;      /* Growth — unica cor de CTA */
+  --color-signal-hover: #0ea16d;
+  --color-mint:         #DFF7EB;      /* highlight claro */
+  --color-evergreen:    #0F3D32;      /* referencia explicita */
+  --color-growth:       #10B981;
+
+  /* Tags de categoria — paleta Copilot (candy) */
+  --color-tag-coral:     #ff4433;
+  --color-tag-lime:      #00cc4b;
+  --color-tag-tangerine: #ff8833;
+  --color-tag-hot-pink:  #ff33aa;
+  --color-tag-violet:    #9019e6;
+  --color-tag-sunflower: #ffcc02;
+  --color-tag-sky:       #00acfe;
+  --color-tag-ember:     #ea687c;
+  --color-tag-olive:     #94ae43;
+  --color-tag-slate:     #5c6f8a;
+
+  /* Status */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger:  #ef4444;
+
+  /* Aliases de compat com o visual antigo (enquanto migramos tela a tela).
+     Primary agora e Growth; primary-dark e Evergreen. */
+  --color-primary:      #10B981;
+  --color-primary-dark: #0F3D32;
+  --color-charcoal:     #061e1a;
+
+  /* ---------- Typography ---------- */
+  /* Substitutos free via Google Fonts (ver index.html):
+     Jokker  → Space Grotesk  (display headings)
+     Matter Thin → Inter      (body, pesos 100-400) */
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --text-caption:    12px;
+  --text-body-sm:    14px;
+  --text-body:       16px;
+  --text-body-lg:    18px;
+  --text-subheading: 24px;
+  --text-eyebrow:    28px;
+  --text-heading-sm: 38px;
+  --text-heading:    56px;
+  --text-heading-lg: 64px;
+  --text-display:    148px;
+
+  /* ---------- Spacing ---------- */
+  --spacing: 4px;
+
+  /* ---------- Radius ---------- */
+  --radius-md:         8px;
+  --radius-lg:         12px;
+  --radius-xl:         16px;   /* buttons */
+  --radius-2xl:        20px;   /* tags */
+  --radius-3xl:        24px;   /* cards */
+  --radius-huge:       40px;   /* large containers */
+}
+
+/* ===========================================
+   Base styles — dark only
+   =========================================== */
+
+html, body, #root {
+  background-color: var(--color-midnight-canvas);
+  color: var(--color-paper-white);
+  min-height: 100vh;
+}
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
+  font-weight: 300;   /* Matter Thin substitute: Inter weight 300 (quase 100 mas legivel em densidade) */
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
 }
 
-.dark body, body.dark {
-  @apply bg-gray-950 text-gray-100;
+/* Tipografia de headings */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
-.dark .input {
-  @apply bg-gray-800 border-gray-600 text-gray-100;
-}
+/* ===========================================
+   Utility classes (componentes comuns)
+   =========================================== */
 
-.dark .input:focus {
-  @apply ring-2 ring-primary/50 border-primary outline-none;
-}
-
+/* Input padrao */
 .input {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm;
+  width: 100%;
+  padding: 10px 14px;
+  background-color: var(--color-deep-surface);
+  border: 1px solid var(--color-steel-border);
+  border-radius: var(--radius-xl);
+  color: var(--color-paper-white);
+  font-size: 15px;
+  font-weight: 300;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input::placeholder {
+  color: var(--color-mist);
+}
+.input:focus {
+  border-color: var(--color-signal);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-signal) 20%, transparent);
 }
 
-.input:focus {
-  @apply ring-2 ring-primary/50 border-primary outline-none;
+/* Botao primario (Signal) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: var(--color-signal);
+  color: var(--color-paper-white);
+  border: 0;
+  border-radius: var(--radius-xl);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-signal-hover);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Botao ghost / secundario */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: transparent;
+  color: var(--color-paper-white);
+  border: 1px solid var(--color-steel-border);
+  border-radius: var(--radius-xl);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.btn-ghost:hover:not(:disabled) {
+  border-color: var(--color-fog);
+  background-color: color-mix(in oklab, var(--color-paper-white) 4%, transparent);
+}
+
+/* Card neomorphic */
+.card-neo {
+  background-color: var(--color-deep-surface);
+  border: 1px solid color-mix(in oklab, var(--color-steel-border) 70%, transparent);
+  border-radius: var(--radius-3xl);
+  padding: 24px;
+  box-shadow:
+    rgba(255, 255, 255, 0.08) 4px 4px 8px 0 inset,
+    rgba(255, 255, 255, 0.16) 4px 4px 16px -4px inset,
+    rgba(0, 0, 0, 0.2) -4px -4px 16px -4px inset;
+}
+
+/* Tag/badge rotacionada estilo Copilot */
+.tag-floating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-paper-white);
+  border-radius: var(--radius-2xl);
+  box-shadow: rgba(255, 255, 255, 0.2) 1px 1px 2px 0 inset;
+}
+
+/* Eyebrow label (all-caps marker) */
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-signal);
 }

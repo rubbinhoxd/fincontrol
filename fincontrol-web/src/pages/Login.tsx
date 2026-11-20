@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MailCheck, Loader2 } from 'lucide-react';
@@ -9,6 +9,19 @@ type ViewState =
   | { kind: 'form' }
   | { kind: 'checkEmail'; email: string }
   | { kind: 'needsVerification'; email: string };
+
+// Tags decorativas flutuantes (estilo Copilot Money) — composicao de categorias
+// de financas pessoais em posicao fixa, rotacao aleatoria, cores da paleta.
+const FLOATING_TAGS = [
+  { label: '🛒 Mercado',    color: 'var(--color-tag-coral)',     top: '12%',  left: '8%',  rotate: '-10deg' },
+  { label: '🏠 Aluguel',    color: 'var(--color-tag-tangerine)', top: '22%',  right: '10%', rotate: '8deg' },
+  { label: '✈️ Viagem',     color: 'var(--color-tag-sky)',       top: '68%',  left: '6%',  rotate: '-6deg' },
+  { label: '💼 Salário',    color: 'var(--color-tag-lime)',      top: '78%',  right: '8%', rotate: '9deg' },
+  { label: '🎬 Streaming',  color: 'var(--color-tag-violet)',    top: '42%',  left: '4%',  rotate: '-12deg' },
+  { label: '📈 Investir',   color: 'var(--color-tag-sunflower)', top: '52%',  right: '6%', rotate: '6deg' },
+  { label: '☕ Café',       color: 'var(--color-tag-ember)',     top: '88%',  left: '12%', rotate: '-4deg' },
+  { label: '🎓 Educação',   color: 'var(--color-tag-hot-pink)',  top: '14%',  right: '35%', rotate: '-6deg' },
+];
 
 export default function Login() {
   const [isRegister, setIsRegister] = useState(false);
@@ -21,9 +34,11 @@ export default function Login() {
   const [resendMsg, setResendMsg] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-
-  // Banner quando o usuario foi redirecionado por sessao expirada
   const [sessionNotice, setSessionNotice] = useState<string>('');
+
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('expired') === '1') {
@@ -32,19 +47,20 @@ export default function Login() {
       setSessionNotice('Sua sessão foi encerrada. Entre de novo.');
     }
     if (params.get('expired') || params.get('unauthorized')) {
-      // Limpa a querystring pra nao reaparecer num refresh
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       if (isRegister) {
         await authApi.register(name, email, password);
@@ -65,12 +81,6 @@ export default function Login() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const t = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resendCooldown]);
 
   const handleResend = async (targetEmail: string) => {
     if (resendCooldown > 0 || resendLoading) return;
@@ -94,18 +104,44 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 w-full max-w-md">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-6" style={{ backgroundColor: 'var(--color-midnight-canvas)' }}>
+      {/* Tags flutuantes decorativas (escondidas em mobile) */}
+      <div className="absolute inset-0 pointer-events-none hidden md:block" aria-hidden="true">
+        {FLOATING_TAGS.map((tag, i) => (
+          <span
+            key={i}
+            className="tag-floating absolute"
+            style={{
+              backgroundColor: tag.color,
+              top: tag.top,
+              left: tag.left,
+              right: tag.right,
+              transform: `rotate(${tag.rotate})`,
+            }}
+          >
+            {tag.label}
+          </span>
+        ))}
+      </div>
+
+      {/* Card central */}
+      <div className="card-neo relative z-10 w-full max-w-md">
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-3">
-            <img src="/favicon.png" alt="Savey" className="w-16 h-16 rounded-2xl shadow-md" />
+          <div className="flex justify-center mb-4">
+            <img src="/favicon.png" alt="Savey" className="w-14 h-14 rounded-2xl shadow-md" />
           </div>
-          <h1 className="text-3xl font-bold text-primary">Savey</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">smart money, simple control</p>
+          <h1 className="text-3xl mb-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '-0.02em' }}>
+            Savey
+          </h1>
+          <p className="text-sm" style={{ color: 'var(--color-fog)', fontWeight: 300 }}>
+            smart money, simple control
+          </p>
         </div>
 
+        {/* Banner de sessao expirada */}
         {sessionNotice && view.kind === 'form' && (
-          <div className="mb-4 p-3 rounded-lg bg-warning/10 border border-warning/30 text-sm text-warning">
+          <div className="mb-4 p-3 rounded-xl text-sm" style={{ backgroundColor: 'color-mix(in oklab, var(--color-warning) 12%, transparent)', border: '1px solid color-mix(in oklab, var(--color-warning) 30%, transparent)', color: 'var(--color-warning)' }}>
             {sessionNotice}
           </div>
         )}
@@ -115,21 +151,21 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {isRegister && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+                  <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--color-mist)', fontWeight: 500 }}>Nome</label>
                   <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input" required />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--color-mist)', fontWeight: 500 }}>Email</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" required />
               </div>
 
               <div>
-                <div className="flex items-baseline justify-between mb-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Senha</label>
+                <div className="flex items-baseline justify-between mb-2">
+                  <label className="block text-xs uppercase tracking-wider" style={{ color: 'var(--color-mist)', fontWeight: 500 }}>Senha</label>
                   {!isRegister && (
-                    <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                    <Link to="/forgot-password" className="text-xs hover:underline" style={{ color: 'var(--color-signal)' }}>
                       Esqueci minha senha
                     </Link>
                   )}
@@ -137,20 +173,16 @@ export default function Login() {
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required minLength={6} />
               </div>
 
-              {error && <p className="text-sm text-danger">{error}</p>}
+              {error && <p className="text-sm" style={{ color: 'var(--color-danger)' }}>{error}</p>}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-primary text-white py-2.5 rounded-lg font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
-              >
+              <button type="submit" disabled={loading} className="btn-primary w-full mt-2">
                 {loading ? 'Carregando...' : isRegister ? 'Criar conta' : 'Entrar'}
               </button>
             </form>
 
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+            <p className="text-center text-sm mt-6" style={{ color: 'var(--color-fog)' }}>
               {isRegister ? 'Já tem conta?' : 'Não tem conta?'}{' '}
-              <button onClick={() => { setIsRegister(!isRegister); setError(''); }} className="text-primary font-medium hover:underline">
+              <button onClick={() => { setIsRegister(!isRegister); setError(''); }} className="font-medium hover:underline" style={{ color: 'var(--color-signal)' }}>
                 {isRegister ? 'Entrar' : 'Criar conta'}
               </button>
             </p>
@@ -159,33 +191,31 @@ export default function Login() {
 
         {(view.kind === 'checkEmail' || view.kind === 'needsVerification') && (
           <div className="text-center">
-            <MailCheck size={48} className="mx-auto text-primary mb-4" />
-            <h2 className="text-xl font-semibold dark:text-gray-100 mb-2">
+            <MailCheck size={48} className="mx-auto mb-4" style={{ color: 'var(--color-signal)' }} />
+            <h2 className="text-xl mb-2" style={{ fontWeight: 500 }}>
               {view.kind === 'checkEmail' ? 'Confira seu email' : 'Email não verificado'}
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="mb-4" style={{ color: 'var(--color-fog)' }}>
               {view.kind === 'checkEmail'
                 ? 'Mandamos um link de confirmação pra '
                 : 'Precisamos confirmar '}
-              <strong className="dark:text-gray-300">{view.email}</strong>
+              <strong style={{ color: 'var(--color-paper-white)' }}>{view.email}</strong>
               {view.kind === 'checkEmail'
                 ? '. Abra o email e clica no botão pra ativar sua conta.'
                 : ' antes de você entrar. Confira sua caixa de entrada.'}
             </p>
 
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
+            <p className="text-xs mb-6" style={{ color: 'var(--color-mist)' }}>
               💡 Não achou? Olha também na pasta de <strong>spam</strong> ou <strong>lixo eletrônico</strong>.
             </p>
 
             <button
               onClick={() => handleResend(view.email)}
               disabled={resendCooldown > 0 || resendLoading}
-              className="w-full mb-3 border border-primary text-primary py-2.5 rounded-lg font-medium hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+              className="btn-ghost w-full mb-3"
             >
               {resendLoading ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" /> Enviando...
-                </>
+                <><Loader2 size={16} className="animate-spin" /> Enviando...</>
               ) : resendCooldown > 0 ? (
                 `Reenviar em ${resendCooldown}s`
               ) : (
@@ -193,12 +223,9 @@ export default function Login() {
               )}
             </button>
 
-            {resendMsg && <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{resendMsg}</p>}
+            {resendMsg && <p className="text-sm mb-3" style={{ color: 'var(--color-fog)' }}>{resendMsg}</p>}
 
-            <button
-              onClick={backToForm}
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary"
-            >
+            <button onClick={backToForm} className="text-sm hover:underline" style={{ color: 'var(--color-mist)' }}>
               Voltar
             </button>
           </div>
