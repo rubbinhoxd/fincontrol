@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
+import { isJwtExpired } from '../utils/jwt';
 
 interface AuthContextType {
   token: string | null;
@@ -11,9 +12,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/**
+ * Le token+userName do localStorage mas rejeita se o JWT ja expirou.
+ * Impede o estado "parece logado mas as APIs retornam 401" que gera
+ * dashboard/listas vazias no primeiro load.
+ */
+function loadInitialAuth(): { token: string | null; userName: string | null } {
+  const token = localStorage.getItem('token');
+  const userName = localStorage.getItem('userName');
+  if (token && isJwtExpired(token)) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    return { token: null, userName: null };
+  }
+  return { token, userName };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [userName, setUserName] = useState<string | null>(localStorage.getItem('userName'));
+  const initial = loadInitialAuth();
+  const [token, setToken] = useState<string | null>(initial.token);
+  const [userName, setUserName] = useState<string | null>(initial.userName);
 
   const login = (token: string, name: string) => {
     localStorage.setItem('token', token);

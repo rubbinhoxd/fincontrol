@@ -22,6 +22,21 @@ export default function Login() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  // Banner quando o usuario foi redirecionado por sessao expirada
+  const [sessionNotice, setSessionNotice] = useState<string>('');
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('expired') === '1') {
+      setSessionNotice('Sua sessão expirou. Entre de novo pra continuar.');
+    } else if (params.get('unauthorized') === '1') {
+      setSessionNotice('Sua sessão foi encerrada. Entre de novo.');
+    }
+    if (params.get('expired') || params.get('unauthorized')) {
+      // Limpa a querystring pra nao reaparecer num refresh
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -88,6 +103,12 @@ export default function Login() {
           <h1 className="text-3xl font-bold text-primary">Savey</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">smart money, simple control</p>
         </div>
+
+        {sessionNotice && view.kind === 'form' && (
+          <div className="mb-4 p-3 rounded-lg bg-warning/10 border border-warning/30 text-sm text-warning">
+            {sessionNotice}
+          </div>
+        )}
 
         {view.kind === 'form' && (
           <>
