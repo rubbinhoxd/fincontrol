@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Check } from 'lucide-react';
 import PageContainer from '../components/layout/PageContainer';
 import { createTransaction, getTransaction, updateTransaction } from '../api/transactions';
 import { listCategories } from '../api/categories';
@@ -19,8 +20,6 @@ export default function TransactionForm() {
   const [isExistingInstallment, setIsExistingInstallment] = useState(false);
   const [isExistingRecurring, setIsExistingRecurring] = useState(false);
   const [canActivateRecurring, setCanActivateRecurring] = useState(false);
-  // Escopo da edicao pra transacoes em grupo (recorrente/parcelamento):
-  //   'single' = so esta  |  'future' = esta + futuras  |  'all' = todas (incluindo passadas)
   const [editScope, setEditScope] = useState<'single' | 'future' | 'all'>('single');
 
   const [form, setForm] = useState<TransactionRequest>({
@@ -83,7 +82,6 @@ export default function TransactionForm() {
   }, [id]);
 
   const filteredCategories = categories.filter((c) => c.type === form.type);
-
   const selectedCard = cards.find((c) => c.id === form.cardId) ?? null;
   const canShare = !!selectedCard && selectedCard.shared;
 
@@ -102,7 +100,6 @@ export default function TransactionForm() {
         next.totalInstallments = null;
       }
       if (field === 'cardId') {
-        // Se o novo cartão nao for compartilhado, zera o flag
         const c = cards.find((cc) => cc.id === value) ?? null;
         if (!c || !c.shared) next.sharedWithPartner = false;
       }
@@ -117,7 +114,6 @@ export default function TransactionForm() {
 
     try {
       if (isEdit) {
-        // Transacao em grupo (recorrente/parcelamento) manda scope; senao, default 'single'
         const scope = (isExistingRecurring || isExistingInstallment) ? editScope : 'single';
         await updateTransaction(id, form, scope);
       } else {
@@ -133,23 +129,36 @@ export default function TransactionForm() {
 
   return (
     <PageContainer title={isEdit ? 'Editar transação' : 'Nova transação'}>
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 max-w-2xl space-y-5">
+      <form onSubmit={handleSubmit} className="card-neo max-w-3xl space-y-6">
         {/* Type selector */}
-        <div className="flex gap-2">
-          {(['EXPENSE', 'INCOME'] as TransactionType[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => update('type', t)}
-              className={`flex-1 py-2 rounded-lg font-medium text-sm transition-colors ${
-                form.type === t
-                  ? t === 'EXPENSE' ? 'bg-danger text-white' : 'bg-success text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {t === 'EXPENSE' ? 'Despesa' : 'Receita'}
-            </button>
-          ))}
+        <div
+          className="grid grid-cols-2 gap-1 p-1 rounded-full"
+          style={{
+            backgroundColor: 'var(--color-midnight-canvas)',
+            border: '1px solid var(--color-steel-border)',
+          }}
+        >
+          {(['EXPENSE', 'INCOME'] as TransactionType[]).map((t) => {
+            const active = form.type === t;
+            const label = t === 'EXPENSE' ? 'Despesa' : 'Receita';
+            const activeColor = t === 'EXPENSE' ? 'var(--color-danger)' : 'var(--color-success)';
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => update('type', t)}
+                className="py-2 rounded-full text-sm transition-all"
+                style={{
+                  fontWeight: 500,
+                  backgroundColor: active ? `color-mix(in oklab, ${activeColor} 16%, transparent)` : 'transparent',
+                  color: active ? activeColor : 'var(--color-fog)',
+                  border: active ? `1px solid color-mix(in oklab, ${activeColor} 40%, transparent)` : '1px solid transparent',
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -192,10 +201,11 @@ export default function TransactionForm() {
               onChange={(e) => update('categoryId', e.target.value)}
               className="input"
               required
+              style={{ cursor: 'pointer' }}
             >
-              <option value="">Selecione...</option>
+              <option value="" style={{ backgroundColor: '#061e1a' }}>Selecione...</option>
               {filteredCategories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id} style={{ backgroundColor: '#061e1a' }}>{c.name}</option>
               ))}
             </select>
           </Field>
@@ -206,10 +216,13 @@ export default function TransactionForm() {
                 value={form.cardId ?? ''}
                 onChange={(e) => update('cardId', e.target.value || null)}
                 className="input"
+                style={{ cursor: 'pointer' }}
               >
-                <option value="">Sem cartão (PIX/debito/dinheiro)</option>
+                <option value="" style={{ backgroundColor: '#061e1a' }}>Sem cartão (PIX/débito/dinheiro)</option>
                 {cards.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}{c.shared ? ' (compartilhado)' : ''}</option>
+                  <option key={c.id} value={c.id} style={{ backgroundColor: '#061e1a' }}>
+                    {c.name}{c.shared ? ' (compartilhado)' : ''}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -217,22 +230,31 @@ export default function TransactionForm() {
         </div>
 
         {form.type === 'EXPENSE' && canShare && (
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-primary">
-              <input type="checkbox" checked={form.sharedWithPartner} onChange={(e) => update('sharedWithPartner', e.target.checked)} className="w-4 h-4 rounded border-primary/40 text-primary focus:ring-primary" />
-              Dividido por casal? (50/50)
+          <Notice tone="signal">
+            <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <input
+                type="checkbox"
+                checked={form.sharedWithPartner}
+                onChange={(e) => update('sharedWithPartner', e.target.checked)}
+                className="w-4 h-4 accent-emerald-500"
+              />
+              <span style={{ fontWeight: 500, color: 'var(--color-signal)' }}>
+                Dividido por casal? (50/50)
+              </span>
             </label>
             {form.sharedWithPartner && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Sua parte sera contabilizada como metade do valor.</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-mist)' }}>
+                Sua parte será contabilizada como metade do valor.
+              </p>
             )}
-          </div>
+          </Notice>
         )}
 
         {form.type === 'EXPENSE' && (
           <>
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Classificacao</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <p className="label-meta mb-3">Classificação</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 <Toggle label="Planejado" checked={form.planned} onChange={(v) => update('planned', v)} />
                 <Toggle label="Fixo" checked={form.fixed} onChange={(v) => update('fixed', v)} />
                 <Toggle label="Recorrente" checked={form.recurring} onChange={(v) => update('recurring', v)} />
@@ -242,10 +264,9 @@ export default function TransactionForm() {
               </div>
             </div>
 
-            {/* Recorrência — ativar em transação existente */}
             {isEdit && canActivateRecurring && (
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recorrência</p>
+                <p className="label-meta mb-3">Recorrência</p>
                 <Toggle
                   label="Ativar recorrência (cria cópias para os próximos 12 meses)"
                   checked={form.activateRecurring}
@@ -255,22 +276,24 @@ export default function TransactionForm() {
             )}
 
             {isExistingRecurring && (
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                <p className="text-sm text-primary font-medium">Esta transação faz parte de um grupo recorrente.</p>
-              </div>
+              <Notice tone="signal">
+                <p className="text-sm" style={{ color: 'var(--color-signal)', fontWeight: 500 }}>
+                  Esta transação faz parte de um grupo recorrente.
+                </p>
+              </Notice>
             )}
 
-            {/* Nota ao criar com recorrente */}
             {!isEdit && form.recurring && !form.installment && (
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                <p className="text-sm text-primary">Ao criar com "Recorrente" marcado, o sistema criará cópias automaticas para os próximos 12 meses.</p>
-              </div>
+              <Notice tone="signal">
+                <p className="text-sm" style={{ color: 'var(--color-fog)' }}>
+                  Ao criar com <strong style={{ color: 'var(--color-signal)' }}>Recorrente</strong> marcado, o sistema criará cópias automáticas para os próximos 12 meses.
+                </p>
+              </Notice>
             )}
 
-            {/* Parcelamento */}
             {(!isEdit || isExistingInstallment) && (
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Parcelamento</p>
+                <p className="label-meta mb-3">Parcelamento</p>
                 <Toggle
                   label="Parcelamento"
                   checked={form.installment}
@@ -306,68 +329,87 @@ export default function TransactionForm() {
                 )}
 
                 {isExistingInstallment && (
-                  <p className="text-xs text-gray-400 mt-2">Campos de parcelamento nao podem ser alterados apos a criação.</p>
+                  <p className="text-xs mt-2" style={{ color: 'var(--color-mist)' }}>
+                    Campos de parcelamento não podem ser alterados após a criação.
+                  </p>
                 )}
               </div>
             )}
           </>
         )}
 
-        <Field label="Observacoes (opcional)">
+        <Field label="Observações (opcional)">
           <textarea
             value={form.notes || ''}
             onChange={(e) => update('notes', e.target.value || null)}
             className="input"
             rows={2}
+            style={{ resize: 'vertical', minHeight: 60 }}
           />
         </Field>
 
-        {/* Escopo da edicao para transacoes em grupo (recorrente ou parcelamento) */}
+        {/* Escopo da edicao */}
         {isEdit && (isExistingRecurring || isExistingInstallment) && (
-          <div className="bg-mint/40 dark:bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
-            <p className="text-sm font-medium dark:text-gray-200">
+          <div
+            className="rounded-2xl p-4 space-y-3"
+            style={{
+              backgroundColor: 'color-mix(in oklab, var(--color-signal) 5%, transparent)',
+              border: '1px solid color-mix(in oklab, var(--color-signal) 25%, transparent)',
+            }}
+          >
+            <p className="text-sm" style={{ color: 'var(--color-paper-white)', fontWeight: 500 }}>
               Essa transação faz parte de um grupo {isExistingRecurring ? 'recorrente' : 'parcelado'}. Aplicar a edição em:
             </p>
-            <div className="space-y-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
                 { v: 'single' as const, label: 'Apenas esta' },
-                { v: 'future' as const, label: 'Esta e todas as futuras' },
-                { v: 'all' as const, label: 'Todas (inclui as passadas)' },
-              ].map((opt) => (
-                <label key={opt.v} className="flex items-center gap-2 text-sm cursor-pointer dark:text-gray-300">
-                  <input
-                    type="radio"
-                    name="editScope"
-                    value={opt.v}
-                    checked={editScope === opt.v}
-                    onChange={() => setEditScope(opt.v)}
-                    className="accent-primary"
-                  />
-                  {opt.label}
-                </label>
-              ))}
+                { v: 'future' as const, label: 'Esta + futuras' },
+                { v: 'all' as const, label: 'Todas (inclui passadas)' },
+              ].map((opt) => {
+                const active = editScope === opt.v;
+                return (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    onClick={() => setEditScope(opt.v)}
+                    className="py-2 px-3 text-sm rounded-full transition-all"
+                    style={{
+                      fontWeight: 500,
+                      backgroundColor: active ? 'color-mix(in oklab, var(--color-signal) 18%, transparent)' : 'transparent',
+                      color: active ? 'var(--color-signal)' : 'var(--color-fog)',
+                      border: active
+                        ? '1px solid color-mix(in oklab, var(--color-signal) 50%, transparent)'
+                        : '1px solid var(--color-steel-border)',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              💡 A data da transação não é propagada — cada ocorrência mantém sua data original.
+            <p className="text-xs" style={{ color: 'var(--color-mist)' }}>
+              A data da transação não é propagada — cada ocorrência mantém sua data original.
             </p>
           </div>
         )}
 
-        {error && <p className="text-sm text-danger">{error}</p>}
-
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
+        {error && (
+          <div
+            className="rounded-xl p-3"
+            style={{
+              backgroundColor: 'color-mix(in oklab, var(--color-danger) 10%, transparent)',
+              border: '1px solid color-mix(in oklab, var(--color-danger) 30%, transparent)',
+            }}
           >
+            <p className="text-sm" style={{ color: 'var(--color-danger)' }}>{error}</p>
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-2">
+          <button type="submit" disabled={loading} className="btn-primary">
             {loading ? 'Salvando...' : isEdit ? 'Salvar' : 'Criar'}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate('/transactions')}
-            className="px-6 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors"
-          >
+          <button type="button" onClick={() => navigate('/transactions')} className="btn-ghost">
             Cancelar
           </button>
         </div>
@@ -379,19 +421,50 @@ export default function TransactionForm() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+      <label className="label-meta block mb-2">{label}</label>
       {children}
     </div>
   );
 }
 
-function Toggle({ label, checked, onChange, disabled }: { label: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+function Notice({ children, tone }: { children: React.ReactNode; tone: 'signal' | 'warning' }) {
+  const color = tone === 'signal' ? 'var(--color-signal)' : 'var(--color-warning)';
   return (
-    <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
-      disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-    } ${
-      checked ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
-    }`}>
+    <div
+      className="rounded-2xl p-3"
+      style={{
+        backgroundColor: `color-mix(in oklab, ${color} 7%, transparent)`,
+        border: `1px solid color-mix(in oklab, ${color} 25%, transparent)`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Toggle({
+  label,
+  checked,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <label
+      className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all"
+      style={{
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
+        backgroundColor: checked ? 'color-mix(in oklab, var(--color-signal) 12%, transparent)' : 'var(--color-midnight-canvas)',
+        border: checked
+          ? '1px solid color-mix(in oklab, var(--color-signal) 45%, transparent)'
+          : '1px solid var(--color-steel-border)',
+      }}
+    >
       <input
         type="checkbox"
         checked={checked}
@@ -399,10 +472,24 @@ function Toggle({ label, checked, onChange, disabled }: { label: string; checked
         className="sr-only"
         disabled={disabled}
       />
-      <span className={`w-4 h-4 rounded border flex items-center justify-center ${checked ? 'bg-primary border-primary' : 'border-gray-300'}`}>
-        {checked && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+      <span
+        className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all"
+        style={{
+          backgroundColor: checked ? 'var(--color-signal)' : 'transparent',
+          border: checked ? '1px solid var(--color-signal)' : '1px solid var(--color-mist)',
+        }}
+      >
+        {checked && <Check size={10} strokeWidth={3} style={{ color: 'white' }} />}
       </span>
-      <span className="text-sm">{label}</span>
+      <span
+        className="text-sm"
+        style={{
+          color: checked ? 'var(--color-signal)' : 'var(--color-fog)',
+          fontWeight: checked ? 500 : 400,
+        }}
+      >
+        {label}
+      </span>
     </label>
   );
 }
