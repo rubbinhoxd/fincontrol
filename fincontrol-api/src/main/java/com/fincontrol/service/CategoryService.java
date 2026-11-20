@@ -70,16 +70,16 @@ public class CategoryService {
     public void seedDefaultCategories(User user) {
         List<Category> defaults = List.of(
             buildCategory(user, "Moradia",      TransactionType.EXPENSE, "home",          "#6366F1"),
-            buildCategory(user, "Alimentacao",  TransactionType.EXPENSE, "utensils",      "#F59E0B"),
+            buildCategory(user, "Alimentação",  TransactionType.EXPENSE, "utensils",      "#F59E0B"),
             buildCategory(user, "Transporte",   TransactionType.EXPENSE, "car",           "#3B82F6"),
-            buildCategory(user, "Saude",        TransactionType.EXPENSE, "heart-pulse",   "#EF4444"),
-            buildCategory(user, "Educacao",     TransactionType.EXPENSE, "graduation-cap","#8B5CF6"),
+            buildCategory(user, "Saúde",        TransactionType.EXPENSE, "heart-pulse",   "#EF4444"),
+            buildCategory(user, "Educação",     TransactionType.EXPENSE, "graduation-cap","#8B5CF6"),
             buildCategory(user, "Lazer",        TransactionType.EXPENSE, "gamepad-2",     "#EC4899"),
             buildCategory(user, "Assinaturas",  TransactionType.EXPENSE, "repeat",        "#14B8A6"),
-            buildCategory(user, "Vestuario",    TransactionType.EXPENSE, "shirt",         "#F97316"),
+            buildCategory(user, "Vestuário",    TransactionType.EXPENSE, "shirt",         "#F97316"),
             buildCategory(user, "Outros",       TransactionType.EXPENSE, "ellipsis",      "#6B7280"),
-            buildCategory(user, "Salario",      TransactionType.INCOME,  "banknote",      "#22C55E"),
-            buildCategory(user, "Plantoes",     TransactionType.INCOME,  "clock",         "#0EA5E9"),
+            buildCategory(user, "Salário",      TransactionType.INCOME,  "banknote",      "#22C55E"),
+            buildCategory(user, "Plantões",     TransactionType.INCOME,  "clock",         "#0EA5E9"),
             buildCategory(user, "Freelance",    TransactionType.INCOME,  "laptop",        "#06B6D4"),
             buildCategory(user, "Investimentos",TransactionType.INCOME,  "trending-up",   "#A855F7"),
             buildCategory(user, "Outros",       TransactionType.INCOME,  "ellipsis",      "#6B7280")

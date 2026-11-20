@@ -50,14 +50,14 @@ export default function DashboardPage() {
 
   const alertLabels = {
     GREEN: 'Sob controle',
-    YELLOW: 'Atencao',
+    YELLOW: 'Atenção',
     RED: 'Cuidado!',
   };
 
   const barChartOption = {
     tooltip: { trigger: 'axis' as const },
-    legend: { data: ['Receitas', 'Despesas'], textStyle: { color: textColor } },
-    grid: { left: 60, right: 20, top: 40, bottom: 30 },
+    legend: { data: ['Receitas', 'Despesas'], textStyle: { color: textColor }, bottom: 0, itemGap: 20 },
+    grid: { left: 60, right: 20, top: 20, bottom: 50 },
     xAxis: { type: 'category' as const, data: MONTH_LABELS, axisLabel: { color: textColor }, axisLine: { lineStyle: { color: gridLineColor } } },
     yAxis: { type: 'value' as const, axisLabel: { color: textColor, formatter: (v: number) => `R$${(v / 1000).toFixed(0)}k` }, splitLine: { lineStyle: { color: gridLineColor } } },
     series: [
@@ -70,10 +70,13 @@ export default function DashboardPage() {
     tooltip: { trigger: 'item' as const, formatter: '{b}: R${c} ({d}%)' },
     series: [{
       type: 'pie' as const,
-      radius: ['45%', '75%'],
+      // Radio menor pra sobrar espaco pras labels externas
+      radius: ['38%', '58%'],
       center: ['50%', '50%'],
       itemStyle: { borderRadius: 6, borderColor: dark ? '#111827' : '#fff', borderWidth: 2 },
-      label: { color: textColor, fontSize: 12 },
+      // Labels afastadas do donut
+      label: { color: textColor, fontSize: 12, alignTo: 'edge' as const, edgeDistance: '5%' },
+      labelLine: { length: 12, length2: 10 },
       data: data.topCategories.map((cat) => ({ name: cat.categoryName, value: cat.total, itemStyle: cat.categoryColor ? { color: cat.categoryColor } : undefined })),
     }],
   } : null;
@@ -87,8 +90,8 @@ export default function DashboardPage() {
 
   const paceChartOption = data ? {
     tooltip: { trigger: 'axis' as const },
-    legend: { data: ['Ritmo ideal', 'Ritmo real'], textStyle: { color: textColor } },
-    grid: { left: 60, right: 20, top: 40, bottom: 30 },
+    legend: { data: ['Ritmo ideal', 'Ritmo real'], textStyle: { color: textColor }, bottom: 0, itemGap: 20 },
+    grid: { left: 60, right: 20, top: 20, bottom: 50 },
     xAxis: { type: 'category' as const, data: Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`), axisLabel: { color: textColor, interval: 4 }, axisLine: { lineStyle: { color: gridLineColor } } },
     yAxis: { type: 'value' as const, axisLabel: { color: textColor, formatter: (v: number) => `R$${(v / 1000).toFixed(1)}k` }, splitLine: { lineStyle: { color: gridLineColor } } },
     series: [
@@ -156,7 +159,7 @@ export default function DashboardPage() {
           {/* Control indicators */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card label="Disponível no mês" value={formatCurrency(data.availableToSpend)} color={data.availableToSpend >= 0 ? 'text-primary' : 'text-danger'} />
-            <Card label="Media por dia restante" value={formatCurrency(data.averagePerDayRemaining)} subtitle={`${data.daysRemainingInMonth} dias restantes`} />
+            <Card label="Média por dia restante" value={formatCurrency(data.averagePerDayRemaining)} subtitle={`${data.daysRemainingInMonth} dias restantes`} />
             <Card label="Comprometido com parcelas" value={formatCurrency(data.totalCommittedInstallments)} color="text-warning" />
             <Card
               label="vs. mês anterior"

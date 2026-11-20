@@ -207,7 +207,7 @@ export default function Simulations() {
               <CompareCard label="Saldo" realValue={real.balance} simValue={simulated.balance} />
               <CompareCard label="Disponível no mês" realValue={real.availableToSpend} simValue={simulated.availableToSpend} />
               <ComparePercentCard label="% do salário comprometido" realValue={real.salaryCommittedPercent} simValue={simulated.salaryCommittedPercent} />
-              <CompareCard label="Media por dia restante" realValue={real.averagePerDayRemaining} simValue={simulated.averagePerDayRemaining} subtitle={`${simulated.daysRemainingInMonth} dias restantes`} />
+              <CompareCard label="Média por dia restante" realValue={real.averagePerDayRemaining} simValue={simulated.averagePerDayRemaining} subtitle={`${simulated.daysRemainingInMonth} dias restantes`} />
             </>
           )}
         </div>
@@ -222,7 +222,7 @@ function AlertCard({ simulated }: { simulated: Dashboard }) {
     YELLOW: 'bg-warning/10 text-warning border-warning/30',
     RED: 'bg-danger/10 text-danger border-danger/30',
   };
-  const labels = { GREEN: 'Sob controle', YELLOW: 'Atencao', RED: 'Cuidado!' };
+  const labels = { GREEN: 'Sob controle', YELLOW: 'Atenção', RED: 'Cuidado!' };
   return (
     <div className={`flex items-center gap-3 p-4 rounded-lg border ${colors[simulated.alertLevel]}`}>
       {simulated.alertLevel === 'GREEN' ? <TrendingDown size={20} /> : <AlertTriangle size={20} />}
