@@ -343,7 +343,7 @@ export default function Transactions() {
                         {t.totalInstallments && (
                           <Tag
                             label={t.currentInstallment ? `${t.currentInstallment}/${t.totalInstallments}` : `${t.totalInstallments}x`}
-                            color="#9019e6"
+                            color="#5c6f8a"
                           />
                         )}
                         {t.impulse && <Tag label="Impulso" color="#ff4433" />}
