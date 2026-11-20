@@ -27,26 +27,49 @@ export default function VerifyEmail() {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 w-full max-w-md text-center">
-        <div className="flex justify-center mb-3">
-          <img src="/favicon.png" alt="Savey" className="w-16 h-16 rounded-2xl shadow-md" />
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: 'var(--color-midnight-canvas)' }}
+    >
+      <div className="card-neo w-full max-w-md text-center" style={{ padding: 36 }}>
+        <div className="flex justify-center mb-4">
+          <img src="/favicon.png" alt="Savey" className="w-14 h-14 rounded-2xl" />
         </div>
-        <h1 className="text-3xl font-bold text-primary">Savey</h1>
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 500,
+            fontSize: 32,
+            letterSpacing: '-0.03em',
+            color: 'var(--color-paper-white)',
+          }}
+        >
+          Savey
+        </h1>
 
         <div className="my-8">
           {status === 'loading' && (
             <>
-              <Loader2 size={48} className="mx-auto text-primary animate-spin mb-4" />
-              <p className="text-gray-500 dark:text-gray-400">Verificando seu email...</p>
+              <Loader2 size={44} style={{ color: 'var(--color-signal)' }} className="animate-spin mx-auto mb-4" />
+              <p style={{ color: 'var(--color-fog)' }}>Verificando seu email...</p>
             </>
           )}
 
           {status === 'success' && (
             <>
-              <CheckCircle2 size={48} className="mx-auto text-primary mb-4" />
-              <h2 className="text-xl font-semibold dark:text-gray-100 mb-2">Email confirmado!</h2>
-              <p className="text-gray-500 dark:text-gray-400">
+              <CheckCircle2 size={44} style={{ color: 'var(--color-success)' }} className="mx-auto mb-4" />
+              <h2
+                className="mb-2"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 500,
+                  fontSize: 20,
+                  color: 'var(--color-paper-white)',
+                }}
+              >
+                Email confirmado!
+              </h2>
+              <p style={{ color: 'var(--color-fog)' }}>
                 Sua conta está pronta. Você já pode entrar.
               </p>
             </>
@@ -54,17 +77,24 @@ export default function VerifyEmail() {
 
           {status === 'error' && (
             <>
-              <XCircle size={48} className="mx-auto text-danger mb-4" />
-              <h2 className="text-xl font-semibold dark:text-gray-100 mb-2">Não deu certo</h2>
-              <p className="text-gray-500 dark:text-gray-400">{message}</p>
+              <XCircle size={44} style={{ color: 'var(--color-danger)' }} className="mx-auto mb-4" />
+              <h2
+                className="mb-2"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 500,
+                  fontSize: 20,
+                  color: 'var(--color-paper-white)',
+                }}
+              >
+                Não deu certo
+              </h2>
+              <p style={{ color: 'var(--color-fog)' }}>{message}</p>
             </>
           )}
         </div>
 
-        <Link
-          to="/login"
-          className="inline-block bg-primary text-white px-6 py-2.5 rounded-lg font-medium hover:bg-primary-dark transition-colors"
-        >
+        <Link to="/login" className="btn-primary inline-flex">
           Ir pro login
         </Link>
       </div>

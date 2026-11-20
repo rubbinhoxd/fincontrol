@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import PageContainer from '../components/layout/PageContainer';
 import { getMonthlyReference, upsertMonthlyReference } from '../api/dashboard';
 import { getCurrentYearMonth, formatYearMonth, previousYearMonth, nextYearMonth } from '../utils/date';
@@ -38,29 +38,50 @@ export default function MonthlyReference() {
     <PageContainer
       title="Referência Mensal"
       action={
-        <div className="flex items-center gap-3">
-          <button onClick={() => setYearMonth(previousYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-            <ChevronLeft size={20} />
+        <div
+          className="flex items-center gap-1 px-2 py-1 rounded-full"
+          style={{
+            backgroundColor: 'var(--color-deep-surface)',
+            border: '1px solid var(--color-steel-border)',
+          }}
+        >
+          <button
+            onClick={() => setYearMonth(previousYearMonth(yearMonth))}
+            className="p-1.5 rounded-full transition-colors"
+            style={{ color: 'var(--color-fog)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'color-mix(in oklab, var(--color-paper-white) 5%, transparent)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            <ChevronLeft size={16} />
           </button>
-          <span className="text-lg font-medium min-w-48 text-center">{formatYearMonth(yearMonth)}</span>
-          <button onClick={() => setYearMonth(nextYearMonth(yearMonth))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-            <ChevronRight size={20} />
+          <span className="px-3 text-sm min-w-36 text-center" style={{ color: 'var(--color-paper-white)', fontWeight: 400 }}>
+            {formatYearMonth(yearMonth)}
+          </span>
+          <button
+            onClick={() => setYearMonth(nextYearMonth(yearMonth))}
+            className="p-1.5 rounded-full transition-colors"
+            style={{ color: 'var(--color-fog)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'color-mix(in oklab, var(--color-paper-white) 5%, transparent)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            <ChevronRight size={16} />
           </button>
         </div>
       }
     >
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 max-w-lg">
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Configure o salário de referência para <strong>{formatYearMonth(yearMonth)}</strong>.
-          Este valor sera usado para calcular os indicadores do dashboard. Se nao configurado, herda o ultimo valor cadastrado.
+      <div className="card-neo max-w-lg">
+        <p className="text-sm mb-6" style={{ color: 'var(--color-fog)' }}>
+          Configure o salário de referência para{' '}
+          <strong style={{ color: 'var(--color-paper-white)' }}>{formatYearMonth(yearMonth)}</strong>.
+          Este valor será usado para calcular os indicadores do dashboard. Se não configurado, herda o último valor cadastrado.
         </p>
 
         {loading ? (
-          <div className="text-center py-8 text-gray-400">Carregando...</div>
+          <div className="text-center py-8" style={{ color: 'var(--color-mist)' }}>Carregando...</div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Salário (R$)</label>
+              <label className="label-meta block mb-2">Salário (R$)</label>
               <input
                 type="number"
                 step="0.01"
@@ -73,24 +94,28 @@ export default function MonthlyReference() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observacoes (opcional)</label>
+              <label className="label-meta block mb-2">Observações (opcional)</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="input"
                 rows={2}
                 placeholder="Ex: Salário + vale alimentação"
+                style={{ resize: 'vertical', minHeight: 60 }}
               />
             </div>
 
-            <button
-              type="submit"
-              className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-dark transition-colors"
-            >
-              Salvar
-            </button>
-
-            {saved && <p className="text-sm text-success font-medium">Salvo com sucesso!</p>}
+            <div className="flex items-center gap-3">
+              <button type="submit" className="btn-primary">Salvar</button>
+              {saved && (
+                <span
+                  className="inline-flex items-center gap-1.5 text-sm"
+                  style={{ color: 'var(--color-success)', fontWeight: 500 }}
+                >
+                  <Check size={14} /> Salvo com sucesso!
+                </span>
+              )}
+            </div>
           </form>
         )}
       </div>

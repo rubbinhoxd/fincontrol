@@ -16,7 +16,6 @@ export default function ForgotPassword() {
       await forgotPassword(email);
       setSent(true);
     } catch {
-      // Mesmo em erro, mostra a mesma mensagem (nao vaza se email existe)
       setSent(true);
     } finally {
       setLoading(false);
@@ -24,26 +23,51 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 w-full max-w-md">
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: 'var(--color-midnight-canvas)' }}
+    >
+      <div className="card-neo w-full max-w-md" style={{ padding: 36 }}>
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-3">
-            <img src="/favicon.png" alt="Savey" className="w-16 h-16 rounded-2xl shadow-md" />
+          <div className="flex justify-center mb-4">
+            <img src="/favicon.png" alt="Savey" className="w-14 h-14 rounded-2xl" />
           </div>
-          <h1 className="text-3xl font-bold text-primary">Savey</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">smart money, simple control</p>
+          <h1
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 500,
+              fontSize: 32,
+              letterSpacing: '-0.03em',
+              color: 'var(--color-paper-white)',
+            }}
+          >
+            Savey
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-mist)' }}>
+            smart money, simple control
+          </p>
         </div>
 
         {!sent ? (
           <>
-            <h2 className="text-xl font-semibold dark:text-gray-100 mb-2 text-center">Esqueci minha senha</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-center">
+            <h2
+              className="text-center mb-2"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 500,
+                fontSize: 20,
+                color: 'var(--color-paper-white)',
+              }}
+            >
+              Esqueci minha senha
+            </h2>
+            <p className="text-sm text-center mb-6" style={{ color: 'var(--color-fog)' }}>
               Coloca teu email e a gente manda um link pra criar uma senha nova.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                <label className="label-meta block mb-2">Email</label>
                 <input
                   type="email"
                   value={email}
@@ -53,11 +77,7 @@ export default function ForgotPassword() {
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-primary text-white py-2.5 rounded-lg font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
-              >
+              <button type="submit" disabled={loading} className="btn-primary w-full">
                 {loading ? (
                   <><Loader2 size={16} className="animate-spin" /> Enviando...</>
                 ) : (
@@ -68,19 +88,36 @@ export default function ForgotPassword() {
           </>
         ) : (
           <div className="text-center">
-            <MailCheck size={48} className="mx-auto text-primary mb-4" />
-            <h2 className="text-xl font-semibold dark:text-gray-100 mb-2">Se o email existir, chegará um link</h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Confira sua caixa de entrada em <strong className="dark:text-gray-300">{email}</strong>.
+            <MailCheck size={44} style={{ color: 'var(--color-signal)' }} className="mx-auto mb-4" />
+            <h2
+              className="mb-2"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 500,
+                fontSize: 20,
+                color: 'var(--color-paper-white)',
+              }}
+            >
+              Se o email existir, chegará um link
+            </h2>
+            <p className="mb-4" style={{ color: 'var(--color-fog)' }}>
+              Confira sua caixa de entrada em{' '}
+              <strong style={{ color: 'var(--color-paper-white)' }}>{email}</strong>.
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
-              💡 Não achou? Olha também na pasta de <strong>spam</strong> ou <strong>lixo eletrônico</strong>. O link vale por 1 hora.
+            <p className="text-xs" style={{ color: 'var(--color-mist)' }}>
+              Não achou? Olha também na pasta de <strong>spam</strong> ou{' '}
+              <strong>lixo eletrônico</strong>. O link vale por 1 hora.
             </p>
           </div>
         )}
 
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-          <Link to="/login" className="text-primary font-medium hover:underline">
+        <p className="text-center text-sm mt-6" style={{ color: 'var(--color-fog)' }}>
+          <Link
+            to="/login"
+            style={{ color: 'var(--color-signal)', fontWeight: 500, textDecoration: 'none' }}
+            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+          >
             Voltar para o login
           </Link>
         </p>

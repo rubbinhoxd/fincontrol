@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import PageContainer from '../components/layout/PageContainer';
 import CardVisual from '../components/cards/CardVisual';
 import { getCardCycleDetail } from '../api/cards';
-import type { CardCycleDetail as CardCycleDetailType, Transaction, TransactionType } from '../types';
+import type { CardCycleDetail as CardCycleDetailType, Transaction } from '../types';
 import { formatCurrency, formatPercent } from '../utils/currency';
 import { formatDate } from '../utils/date';
 
@@ -26,7 +26,6 @@ export default function CardCycleDetail() {
 
   const goPrevious = () => {
     if (!data) return;
-    // Vai para uma data dentro do ciclo anterior: cycleEnd - 1 mes (cobre seguranca para meses curtos)
     const end = new Date(data.cycle.cycleEnd + 'T00:00:00');
     const prev = new Date(end);
     prev.setMonth(prev.getMonth() - 1);
@@ -38,7 +37,6 @@ export default function CardCycleDetail() {
     const end = new Date(data.cycle.cycleEnd + 'T00:00:00');
     const next = new Date(end);
     next.setMonth(next.getMonth() + 1);
-    // Se a proxima data e no futuro distante, volta pra hoje (ciclo atual aberto)
     const today = new Date();
     if (next > today) {
       setReferenceDate(undefined);
@@ -51,13 +49,17 @@ export default function CardCycleDetail() {
     <PageContainer
       title="Fatura"
       action={
-        <button onClick={() => navigate('/cards')} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary">
-          <ArrowLeft size={16} /> Voltar
+        <button
+          onClick={() => navigate('/cards')}
+          className="btn-ghost"
+          style={{ fontSize: 14 }}
+        >
+          <ArrowLeft size={14} /> Voltar
         </button>
       }
     >
       {loading || !data ? (
-        <div className="text-center py-12 text-gray-400">Carregando...</div>
+        <div className="card-neo text-center py-16" style={{ color: 'var(--color-mist)' }}>Carregando...</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-4">
@@ -70,26 +72,44 @@ export default function CardCycleDetail() {
               size="lg"
             />
 
-            <div className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-xl p-3 border border-gray-100 dark:border-gray-800">
-              <button onClick={goPrevious} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-                <ChevronLeft size={18} />
+            <div
+              className="flex items-center justify-between card-neo"
+              style={{ padding: '10px 12px' }}
+            >
+              <button
+                onClick={goPrevious}
+                className="p-1.5 rounded-full transition-colors"
+                style={{ color: 'var(--color-fog)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'color-mix(in oklab, var(--color-paper-white) 5%, transparent)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+              >
+                <ChevronLeft size={16} />
               </button>
               <div className="text-center">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="label-meta">
                   {data.cycle.closed ? 'Fatura fechada' : `Fecha em ${data.cycle.daysUntilClosing} dia${data.cycle.daysUntilClosing === 1 ? '' : 's'}`}
                 </p>
-                <p className="text-sm font-medium dark:text-gray-100">{formatDateShort(data.cycle.cycleStart)} a {formatDateShort(data.cycle.cycleEnd)}</p>
+                <p className="text-sm" style={{ color: 'var(--color-paper-white)', fontWeight: 400 }}>
+                  {formatDateShort(data.cycle.cycleStart)} a {formatDateShort(data.cycle.cycleEnd)}
+                </p>
               </div>
               <button
                 onClick={goNext}
                 disabled={!referenceDate}
-                className={`p-1 rounded ${referenceDate ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : 'opacity-30 cursor-not-allowed'}`}
+                className="p-1.5 rounded-full transition-colors"
+                style={{
+                  color: 'var(--color-fog)',
+                  opacity: referenceDate ? 1 : 0.3,
+                  cursor: referenceDate ? 'pointer' : 'not-allowed',
+                }}
+                onMouseEnter={(e) => { if (referenceDate) e.currentTarget.style.backgroundColor = 'color-mix(in oklab, var(--color-paper-white) 5%, transparent)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
               >
-                <ChevronRight size={18} />
+                <ChevronRight size={16} />
               </button>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-100 dark:border-gray-800 space-y-3">
+            <div className="card-neo space-y-3">
               <Stat label="Fatura total" value={formatCurrency(data.cycle.totalSpent)} highlight />
               {data.cycle.shared && (
                 <Stat label="Minha parte" value={formatCurrency(data.cycle.myShare)} share />
@@ -99,7 +119,13 @@ export default function CardCycleDetail() {
               <Stat label="Limite" value={formatCurrency(data.cycle.creditLimit)} muted />
               <Stat label="Transações" value={String(data.cycle.transactionCount)} muted />
               {data.cycle.shared && (
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <p
+                  className="text-[11px] pt-3"
+                  style={{
+                    color: 'var(--color-mist)',
+                    borderTop: '1px solid var(--color-steel-border)',
+                  }}
+                >
                   Cartão compartilhado — % do salário considera apenas a sua parte.
                 </p>
               )}
@@ -107,50 +133,96 @@ export default function CardCycleDetail() {
           </div>
 
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="font-semibold dark:text-gray-100">Transações da fatura</h3>
+            <div className="card-neo overflow-hidden" style={{ padding: 0 }}>
+              <div
+                className="px-5 py-4"
+                style={{ borderBottom: '1px solid var(--color-steel-border)' }}
+              >
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 500, color: 'var(--color-paper-white)' }}>
+                  Transações da fatura
+                </h3>
               </div>
               {data.transactions.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">Nenhuma transação neste ciclo.</div>
+                <div className="text-center py-12" style={{ color: 'var(--color-mist)' }}>
+                  Nenhuma transação neste ciclo.
+                </div>
               ) : (
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-                    <tr>
-                      <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Data</th>
-                      <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Descrição</th>
-                      <th className="text-left px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Categoria</th>
-                      <th className="text-right px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                    {data.transactions.map((t: Transaction) => (
-                      <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="px-4 py-2 text-sm dark:text-gray-300">{formatDate(t.transactionDate)}</td>
-                        <td className="px-4 py-2 text-sm font-medium dark:text-gray-100">
-                          {t.description}
-                          {t.totalInstallments && (
-                            <span className="ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">
-                              {t.currentInstallment ? `${t.currentInstallment}/${t.totalInstallments}` : `${t.totalInstallments}x`}
-                            </span>
-                          )}
-                          {t.sharedWithPartner && (
-                            <span className="ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/15 text-primary" title="Dividido 50/50 com parceiro">½ casal</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-2 text-sm dark:text-gray-300">
-                          <span className="inline-flex items-center gap-1.5">
-                            {t.categoryColor && <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: t.categoryColor }} />}
-                            {t.categoryName}
-                          </span>
-                        </td>
-                        <td className={`px-4 py-2 text-sm font-semibold text-right ${badgeColor(t.type)}`}>
-                          {formatCurrency(t.amount)}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--color-steel-border)' }}>
+                        <th className="label-meta text-left px-4 py-3">Data</th>
+                        <th className="label-meta text-left px-4 py-3">Descrição</th>
+                        <th className="label-meta text-left px-4 py-3">Categoria</th>
+                        <th className="label-meta text-right px-4 py-3">Valor</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {data.transactions.map((t: Transaction) => (
+                        <tr
+                          key={t.id}
+                          className="transition-colors"
+                          style={{ borderTop: '1px solid color-mix(in oklab, var(--color-steel-border) 50%, transparent)' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'color-mix(in oklab, var(--color-paper-white) 3%, transparent)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        >
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-fog)' }}>{formatDate(t.transactionDate)}</td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-paper-white)', fontWeight: 400 }}>
+                            {t.description}
+                            {t.totalInstallments && (
+                              <span
+                                className="ml-2 text-[10px] px-2 py-0.5 rounded-full"
+                                style={{
+                                  fontWeight: 500,
+                                  backgroundColor: 'color-mix(in oklab, #94a3b8 16%, transparent)',
+                                  color: '#94a3b8',
+                                  border: '1px solid color-mix(in oklab, #94a3b8 30%, transparent)',
+                                }}
+                              >
+                                {t.currentInstallment ? `${t.currentInstallment}/${t.totalInstallments}` : `${t.totalInstallments}x`}
+                              </span>
+                            )}
+                            {t.sharedWithPartner && (
+                              <span
+                                className="ml-2 text-[10px] px-2 py-0.5 rounded-full"
+                                style={{
+                                  fontWeight: 500,
+                                  backgroundColor: 'color-mix(in oklab, var(--color-signal) 16%, transparent)',
+                                  color: 'var(--color-signal)',
+                                  border: '1px solid color-mix(in oklab, var(--color-signal) 30%, transparent)',
+                                }}
+                                title="Dividido 50/50 com parceiro"
+                              >
+                                ½ casal
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-fog)' }}>
+                            <span className="inline-flex items-center gap-2">
+                              {t.categoryColor && (
+                                <span
+                                  className="w-2 h-2 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: t.categoryColor }}
+                                />
+                              )}
+                              {t.categoryName}
+                            </span>
+                          </td>
+                          <td
+                            className="px-4 py-3 text-sm text-right"
+                            style={{
+                              fontFamily: 'var(--font-display)',
+                              fontWeight: 500,
+                              color: t.type === 'INCOME' ? 'var(--color-success)' : 'var(--color-danger)',
+                            }}
+                          >
+                            {formatCurrency(t.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
@@ -163,14 +235,26 @@ export default function CardCycleDetail() {
 function Stat({ label, value, highlight, muted, share }: { label: string; value: string; highlight?: boolean; muted?: boolean; share?: boolean }) {
   return (
     <div className="flex justify-between items-baseline">
-      <span className={`text-sm ${muted ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}>{label}</span>
-      <span className={`${highlight ? 'text-2xl font-bold text-danger' : share ? 'text-xl font-bold text-primary' : muted ? 'text-sm text-gray-400 dark:text-gray-500' : 'text-base font-semibold dark:text-gray-100'}`}>{value}</span>
+      <span className="label-meta" style={{ opacity: muted ? 0.7 : 1 }}>{label}</span>
+      <span
+        style={{
+          fontFamily: highlight || share ? 'var(--font-display)' : 'var(--font-sans)',
+          fontWeight: highlight ? 500 : share ? 500 : muted ? 400 : 500,
+          fontSize: highlight ? 22 : share ? 18 : 14,
+          letterSpacing: highlight || share ? '-0.01em' : 0,
+          color: highlight
+            ? 'var(--color-danger)'
+            : share
+            ? 'var(--color-signal)'
+            : muted
+            ? 'var(--color-mist)'
+            : 'var(--color-paper-white)',
+        }}
+      >
+        {value}
+      </span>
     </div>
   );
-}
-
-function badgeColor(type: TransactionType) {
-  return type === 'INCOME' ? 'text-success' : 'text-danger';
 }
 
 function formatDateShort(iso: string): string {

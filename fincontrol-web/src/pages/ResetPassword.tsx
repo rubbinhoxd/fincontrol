@@ -44,26 +44,50 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-3">
-            <img src="/favicon.png" alt="Savey" className="w-16 h-16 rounded-2xl shadow-md" />
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: 'var(--color-midnight-canvas)' }}
+    >
+      <div className="card-neo w-full max-w-md" style={{ padding: 36 }}>
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-4">
+            <img src="/favicon.png" alt="Savey" className="w-14 h-14 rounded-2xl" />
           </div>
-          <h1 className="text-3xl font-bold text-primary">Savey</h1>
+          <h1
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 500,
+              fontSize: 32,
+              letterSpacing: '-0.03em',
+              color: 'var(--color-paper-white)',
+            }}
+          >
+            Savey
+          </h1>
         </div>
 
         {!done ? (
           <>
             <div className="text-center mb-6">
-              <KeyRound size={40} className="mx-auto text-primary mb-3" />
-              <h2 className="text-xl font-semibold dark:text-gray-100">Nova senha</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Escolha uma senha nova pra sua conta.</p>
+              <KeyRound size={36} style={{ color: 'var(--color-signal)' }} className="mx-auto mb-3" />
+              <h2
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 500,
+                  fontSize: 20,
+                  color: 'var(--color-paper-white)',
+                }}
+              >
+                Nova senha
+              </h2>
+              <p className="text-sm mt-1" style={{ color: 'var(--color-fog)' }}>
+                Escolha uma senha nova pra sua conta.
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nova senha</label>
+                <label className="label-meta block mb-2">Nova senha</label>
                 <input
                   type="password"
                   value={password}
@@ -76,7 +100,7 @@ export default function ResetPassword() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar senha</label>
+                <label className="label-meta block mb-2">Confirmar senha</label>
                 <input
                   type="password"
                   value={confirm}
@@ -87,13 +111,19 @@ export default function ResetPassword() {
                 />
               </div>
 
-              {error && <p className="text-sm text-danger">{error}</p>}
+              {error && (
+                <div
+                  className="rounded-xl p-3"
+                  style={{
+                    backgroundColor: 'color-mix(in oklab, var(--color-danger) 10%, transparent)',
+                    border: '1px solid color-mix(in oklab, var(--color-danger) 30%, transparent)',
+                  }}
+                >
+                  <p className="text-sm" style={{ color: 'var(--color-danger)' }}>{error}</p>
+                </div>
+              )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-primary text-white py-2.5 rounded-lg font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
-              >
+              <button type="submit" disabled={loading} className="btn-primary w-full">
                 {loading ? (
                   <><Loader2 size={16} className="animate-spin" /> Salvando...</>
                 ) : (
@@ -102,17 +132,32 @@ export default function ResetPassword() {
               </button>
             </form>
 
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-              <Link to="/login" className="text-primary font-medium hover:underline">
+            <p className="text-center text-sm mt-6" style={{ color: 'var(--color-fog)' }}>
+              <Link
+                to="/login"
+                style={{ color: 'var(--color-signal)', fontWeight: 500, textDecoration: 'none' }}
+                onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+              >
                 Voltar para o login
               </Link>
             </p>
           </>
         ) : (
           <div className="text-center">
-            <CheckCircle2 size={48} className="mx-auto text-primary mb-4" />
-            <h2 className="text-xl font-semibold dark:text-gray-100 mb-2">Senha redefinida!</h2>
-            <p className="text-gray-500 dark:text-gray-400">Redirecionando pro login...</p>
+            <CheckCircle2 size={44} style={{ color: 'var(--color-success)' }} className="mx-auto mb-4" />
+            <h2
+              className="mb-2"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 500,
+                fontSize: 20,
+                color: 'var(--color-paper-white)',
+              }}
+            >
+              Senha redefinida!
+            </h2>
+            <p style={{ color: 'var(--color-fog)' }}>Redirecionando pro login...</p>
           </div>
         )}
       </div>

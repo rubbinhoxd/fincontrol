@@ -47,7 +47,6 @@ export default function StartHereCard({ data }: { data: DashboardType }) {
   const totalCount = steps.length;
   const percent = Math.round((doneCount / totalCount) * 100);
 
-  // Some quando essenciais concluidos ou usuario dispensou
   if (dismissed || essentialDone) return null;
 
   const dispensar = () => {
@@ -56,15 +55,36 @@ export default function StartHereCard({ data }: { data: DashboardType }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-primary/20 dark:border-primary/30 relative">
+    <div
+      className="card-neo relative"
+      style={{
+        border: '1px solid color-mix(in oklab, var(--color-signal) 30%, transparent)',
+      }}
+    >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Rocket size={20} className="text-primary" />
+          <div
+            className="p-2.5 rounded-xl"
+            style={{
+              backgroundColor: 'color-mix(in oklab, var(--color-signal) 12%, transparent)',
+              border: '1px solid color-mix(in oklab, var(--color-signal) 25%, transparent)',
+            }}
+          >
+            <Rocket size={18} style={{ color: 'var(--color-signal)' }} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold dark:text-gray-100">Comece por aqui</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <h3
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 500,
+                fontSize: 18,
+                color: 'var(--color-paper-white)',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              Comece por aqui
+            </h3>
+            <p className="text-sm" style={{ color: 'var(--color-fog)' }}>
               Configure em passos rápidos pra tirar mais valor do Savey
             </p>
           </div>
@@ -72,7 +92,10 @@ export default function StartHereCard({ data }: { data: DashboardType }) {
 
         <button
           onClick={() => setConfirming(true)}
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          className="transition-colors"
+          style={{ color: 'var(--color-mist)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-paper-white)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-mist)')}
           title="Ocultar"
           aria-label="Ocultar"
         >
@@ -80,7 +103,7 @@ export default function StartHereCard({ data }: { data: DashboardType }) {
         </button>
       </div>
 
-      <div className="space-y-2 mb-4">
+      <div className="space-y-1 mb-4">
         {steps.map((step) => (
           <StepRow
             key={step.key}
@@ -91,38 +114,43 @@ export default function StartHereCard({ data }: { data: DashboardType }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+        <div
+          className="flex-1 h-2 rounded-full overflow-hidden"
+          style={{ backgroundColor: 'var(--color-midnight-canvas)', border: '1px solid var(--color-steel-border)' }}
+        >
           <div
-            className="h-full bg-primary transition-all"
-            style={{ width: `${percent}%` }}
+            className="h-full transition-all"
+            style={{
+              width: `${percent}%`,
+              backgroundColor: 'var(--color-signal)',
+            }}
           />
         </div>
-        <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+        <span className="text-xs whitespace-nowrap" style={{ color: 'var(--color-mist)' }}>
           {doneCount} de {totalCount} concluídos
         </span>
       </div>
 
       {confirming && (
-        <div className="absolute inset-0 bg-white/95 dark:bg-gray-900/95 rounded-xl flex flex-col items-center justify-center p-6 backdrop-blur-sm">
-          <p className="text-center dark:text-gray-100 font-medium mb-1">
+        <div
+          className="absolute inset-0 rounded-3xl flex flex-col items-center justify-center p-6 backdrop-blur-sm"
+          style={{ backgroundColor: 'color-mix(in oklab, var(--color-deep-surface) 90%, transparent)' }}
+        >
+          <p
+            className="text-center mb-1"
+            style={{ color: 'var(--color-paper-white)', fontWeight: 500 }}
+          >
             Ocultar este guia?
           </p>
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <p
+            className="text-center text-sm mb-4"
+            style={{ color: 'var(--color-fog)' }}
+          >
             Você não verá mais este card, mesmo com passos pendentes.
           </p>
           <div className="flex gap-2">
-            <button
-              onClick={() => setConfirming(false)}
-              className="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={dispensar}
-              className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-dark transition-colors text-sm font-medium"
-            >
-              Ocultar
-            </button>
+            <button onClick={() => setConfirming(false)} className="btn-ghost">Cancelar</button>
+            <button onClick={dispensar} className="btn-primary">Ocultar</button>
           </div>
         </div>
       )}
@@ -135,20 +163,33 @@ function StepRow({ step, onClick }: { step: Step; onClick: () => void }) {
   return (
     <div
       onClick={clickable ? onClick : undefined}
-      className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
-        clickable ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''
-      }`}
+      className="flex items-center gap-3 p-2.5 rounded-xl transition-colors"
+      style={{ cursor: clickable ? 'pointer' : 'default' }}
+      onMouseEnter={(e) => { if (clickable) e.currentTarget.style.backgroundColor = 'color-mix(in oklab, var(--color-paper-white) 4%, transparent)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
     >
       {step.done ? (
-        <Check size={18} className="text-primary flex-shrink-0" />
+        <div
+          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: 'var(--color-signal)' }}
+        >
+          <Check size={12} strokeWidth={3} style={{ color: 'white' }} />
+        </div>
       ) : (
-        <Circle size={18} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
+        <Circle size={20} style={{ color: 'var(--color-mist)' }} className="flex-shrink-0" />
       )}
-      <span className={`flex-1 text-sm ${step.done ? 'text-gray-400 dark:text-gray-500 line-through' : 'dark:text-gray-200'}`}>
+      <span
+        className="flex-1 text-sm"
+        style={{
+          color: step.done ? 'var(--color-mist)' : 'var(--color-paper-white)',
+          textDecoration: step.done ? 'line-through' : 'none',
+          fontWeight: step.done ? 400 : 400,
+        }}
+      >
         {step.label}
-        {step.optional && <span className="text-xs text-gray-400 ml-2">(opcional)</span>}
+        {step.optional && <span className="text-xs ml-2" style={{ color: 'var(--color-mist)' }}>(opcional)</span>}
       </span>
-      {clickable && <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />}
+      {clickable && <ChevronRight size={16} style={{ color: 'var(--color-mist)' }} className="flex-shrink-0" />}
     </div>
   );
 }
